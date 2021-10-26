@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"picker/backend/go/pkg/room"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -22,7 +23,7 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO(), func(o *config.LoadOptions) error {
-		o.Region = "ap-southeast-2"
+		o.Region = os.Getenv("region")
 		return nil
 	})
 

@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -21,10 +22,10 @@ type Room struct {
 
 func GetRoom(id string, client *dynamodb.Client) *Room {
 	res, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String("picker-table"),
+		TableName: aws.String(os.Getenv("table")),
 		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", id)},
-			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", id)},
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
 		},
 	})
 
