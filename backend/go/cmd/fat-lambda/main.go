@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"picker/backend/go/pkg/room"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,10 +41,21 @@ func init() {
 		res, err := room.GetPublicRoom(id, client)
 
 		if err != nil {
-			c.AbortWithStatus(404)
+			c.AbortWithStatus(http.StatusNotFound)
 		}
 
-		c.JSON(200, res)
+		c.JSON(http.StatusOK, res)
+	})
+
+	r.GET("/publicRoom/:id/available", func(c *gin.Context) {
+		id := c.Param("id")
+		_, err := room.GetPublicRoom(id, client)
+
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"available": true})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"available": false})
 	})
 
 	ginLambda = ginadapter.NewV2(r)

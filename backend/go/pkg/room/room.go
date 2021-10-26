@@ -34,12 +34,6 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 	return &PublicRoom{ID: room.ID}, nil
 }
 
-func CheckRoomNameAvailable(id string, client *dynamodb.Client) bool {
-	_, err := GetRoom(id, client)
-
-	return err != nil
-}
-
 func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 	res, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv("table")),
