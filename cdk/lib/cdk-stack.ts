@@ -41,10 +41,14 @@ export class CdkStack extends cdk.Stack {
 
     const svelteBucket = new s3.Bucket(this, "svelte-bucket", {
       websiteIndexDocument: "index.html",
-      publicReadAccess: true,
+      enforceSSL: true,
     });
 
     new s3deploy.BucketDeployment(this, "static-svelte-website-deployment", {
+      cacheControl: [
+        s3deploy.CacheControl.maxAge(cdk.Duration.days(365)),
+        s3deploy.CacheControl.setPublic(),
+      ],
       sources: [
         s3deploy.Source.asset("../frontend", {
           bundling: {
@@ -71,7 +75,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, "cloudfrontDistribution", {
-      value: distribution.domainName,
+      value: `https://${distribution.domainName}`,
     });
 
     new cdk.CfnOutput(this, "httpGateway", {
