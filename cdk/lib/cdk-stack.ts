@@ -14,23 +14,24 @@ export class CdkStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
-    const roomLambda = new lambda.GoFunction(this, "handler", {
-      entry: "../backend/go/cmd/room",
+    const fatLambda = new lambda.GoFunction(this, "handler", {
+      entry: "../backend/go/cmd/fat-lambda",
       environment: {
         table: table.tableName,
         region: this.region,
+        GIN_MODE: "release",
       },
     });
 
-    table.grantReadWriteData(roomLambda);
+    table.grantReadWriteData(fatLambda);
 
     const httpApi = new HttpApi(this, "api-gateway", {});
 
     httpApi.addRoutes({
-      path: "/room/{id}",
+      path: "/{proxy+}",
       methods: [HttpMethod.ANY],
       integration: new LambdaProxyIntegration({
-        handler: roomLambda,
+        handler: fatLambda,
       }),
     });
   }

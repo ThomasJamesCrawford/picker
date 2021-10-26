@@ -35,10 +35,15 @@ func init() {
 
 	r := gin.Default()
 
-	r.GET("/room/:id", func(c *gin.Context) {
+	r.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
+		res, err := room.GetPublicRoom(id, client)
 
-		c.JSON(200, room.GetRoom(id, client))
+		if err != nil {
+			c.AbortWithStatus(404)
+		}
+
+		c.JSON(200, res)
 	})
 
 	ginLambda = ginadapter.NewV2(r)

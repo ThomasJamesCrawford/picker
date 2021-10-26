@@ -12,15 +12,35 @@ import (
 )
 
 type Room struct {
-	PK   string `dynamodbav:"PK"`
-	SK   string `dynamodbav:"SK"`
-	Type string `dynamodbav:"type"`
+	PK   string `dynamodbav:"PK" json:"-"`
+	SK   string `dynamodbav:"SK" json:"-"`
+	Type string `dynamodbav:"type" json:"-"`
 
-	Name       string `json:"name"`
-	SecretName string `json:"secretName"`
+	ID            string `json:"id"`
+	OwnershipHash string `json:"ownershipHash"`
 }
 
-func GetRoom(id string, client *dynamodb.Client) *Room {
+type PublicRoom struct {
+	ID string `json:"id"`
+}
+
+func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
+	room, err := GetRoom(id, client)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &PublicRoom{ID: room.ID}, nil
+}
+
+func CheckRoomNameAvailable(id string, client *dynamodb.Client) bool {
+	_, err := GetRoom(id, client)
+
+	return err != nil
+}
+
+func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 	res, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv("table")),
 		Key: map[string]types.AttributeValue{
@@ -30,7 +50,7 @@ func GetRoom(id string, client *dynamodb.Client) *Room {
 	})
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	room := &Room{}
@@ -41,5 +61,5 @@ func GetRoom(id string, client *dynamodb.Client) *Room {
 		panic(unmarhsalError)
 	}
 
-	return room
+	return room, nil
 }
