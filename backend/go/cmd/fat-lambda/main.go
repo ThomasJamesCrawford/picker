@@ -41,7 +41,12 @@ func init() {
 		res, err := room.GetPublicRoom(id, client)
 
 		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+
+		if res == nil {
 			c.AbortWithStatus(http.StatusNotFound)
+			return
 		}
 
 		c.JSON(http.StatusOK, res)
@@ -49,10 +54,16 @@ func init() {
 
 	r.GET("/publicRoom/:id/available", func(c *gin.Context) {
 		id := c.Param("id")
-		_, err := room.GetPublicRoom(id, client)
+		res, err := room.GetPublicRoom(id, client)
 
 		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		if res == nil {
 			c.JSON(http.StatusOK, gin.H{"available": true})
+			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{"available": false})

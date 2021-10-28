@@ -31,6 +31,10 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 		return nil, err
 	}
 
+	if room == nil {
+		return nil, nil
+	}
+
 	return &PublicRoom{ID: room.ID}, nil
 }
 
@@ -42,6 +46,10 @@ func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
 		},
 	})
+
+	if res.Item == nil {
+		return nil, nil
+	}
 
 	if err != nil {
 		return nil, err
