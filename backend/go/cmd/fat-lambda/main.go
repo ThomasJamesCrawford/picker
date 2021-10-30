@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
+	"picker/backend/go/pkg/middleware"
 	"picker/backend/go/pkg/room"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	cors "github.com/rs/cors/wrapper/gin"
 )
@@ -38,8 +40,18 @@ func init() {
 
 	r := gin.Default()
 
+	store := cookie.NewStore([]byte("secret"))
+	r.Use(sessions.Sessions("session", store))
+
+	r.Use(middleware.UserId())
+
 	// api gateway handles CORS for us
-	r.Use(cors.AllowAll())
+	r.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"*"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	}))
 
 	r.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
@@ -60,6 +72,10 @@ func init() {
 	r.GET("/publicRoom/:id/available", func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client)
+
+		session := sessions.Default(c)
+		session.Set("nice", 1)
+		session.Save()
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -85,7 +101,6 @@ func init() {
 		room, err := room.NewRoom(createRoomRequest, client)
 
 		if err != nil {
-			log.Default().Println(err)
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}

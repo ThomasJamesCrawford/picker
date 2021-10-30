@@ -44,6 +44,7 @@ export class BackendStack extends cdk.Stack {
           `https://${props.distribution.distributionDomainName}`,
         ],
         maxAge: cdk.Duration.minutes(10),
+        allowCredentials: true,
       },
     });
 

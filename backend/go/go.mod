@@ -12,7 +12,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/go-playground/validator/v10 v10.3.0 // indirect
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
@@ -42,14 +42,21 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.0.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.4.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.2.0 // indirect
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.4
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/twinj/uuid v1.0.0
 )
 
-require github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.5.0 // indirect
+require (
+	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.5.0 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/sessions v1.2.0 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
+)
 
 require (
+	github.com/gin-contrib/sessions v0.0.4
 	github.com/myesui/uuid v1.0.0 // indirect
 	github.com/rs/cors v1.8.0
 	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
