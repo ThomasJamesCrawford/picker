@@ -5,7 +5,7 @@
 	import Trash from '$lib/icons/trash.svelte';
 	import Info from '$lib/icons/info.svelte';
 	import Loading from '$lib/icons/loading.svelte';
-	import Dots from '$lib/icons/dots.svelte';
+	import { debounce } from '$lib/helpers/debounce';
 
 	let options: string[] = [];
 
@@ -22,22 +22,31 @@
 		}
 	};
 
+	const fetchIsAvailable = debounce(500, (name: string) =>
+		fetch(`${import.meta.env.VITE_API_URL}/publicRoom/${name}/available`)
+			.then((res) => res.json())
+			.then((res) => {
+				if (res.available === true) {
+					shortLinkValidated = true;
+				} else {
+					shortLinkValidated = false;
+				}
+			})
+			.catch((err) => {
+				console.error(err);
+			})
+			.finally(() => {
+				shortLinkvalidationLoading = false;
+			})
+	);
+
 	/**
 	 * Fake for now, needs to hit api (debounced)
 	 */
 	$: if (shortLink) {
 		shortLinkValidated = false;
 		shortLinkvalidationLoading = true;
-
-		setTimeout(() => {
-			if (shortLink.includes('wrong')) {
-				shortLinkValidated = false;
-			} else {
-				shortLinkValidated = true;
-			}
-
-			shortLinkvalidationLoading = false;
-		}, 1000);
+		fetchIsAvailable(shortLink);
 	}
 </script>
 
