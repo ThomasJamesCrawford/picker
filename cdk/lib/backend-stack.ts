@@ -3,9 +3,13 @@ import * as lambda from "@aws-cdk/aws-lambda-go";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "@aws-cdk/aws-apigatewayv2";
 import { LambdaProxyIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
+import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
 
+interface BackendStackProps extends cdk.StackProps {
+  distribution: CloudFrontWebDistribution;
+}
 export class BackendStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
     const table = new dynamodb.Table(this, "picker-table", {
@@ -33,13 +37,12 @@ export class BackendStack extends cdk.Stack {
 
     const httpApi = new HttpApi(this, "api-gateway", {
       corsPreflight: {
-        allowMethods: [
-          CorsHttpMethod.GET,
-          CorsHttpMethod.HEAD,
-          CorsHttpMethod.OPTIONS,
-          CorsHttpMethod.POST,
+        allowHeaders: ["*"],
+        allowMethods: [CorsHttpMethod.ANY],
+        allowOrigins: [
+          "http://localhost:3000",
+          `https://${props.distribution.distributionDomainName}`,
         ],
-        allowOrigins: ["http://localhost:3000"],
         maxAge: cdk.Duration.minutes(10),
       },
     });

@@ -2,8 +2,11 @@ import * as cdk from "@aws-cdk/core";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as s3deploy from "@aws-cdk/aws-s3-deployment";
 import * as cloudfront from "@aws-cdk/aws-cloudfront";
+import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
 
 export class FrontendStack extends cdk.Stack {
+  public distribution: CloudFrontWebDistribution;
+
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -32,6 +35,8 @@ export class FrontendStack extends cdk.Stack {
         ],
       }
     );
+
+    this.distribution = distribution;
 
     new s3deploy.BucketDeployment(this, "static-svelte-website-deployment", {
       /**
