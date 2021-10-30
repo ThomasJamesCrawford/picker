@@ -23,10 +23,6 @@ func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.AP
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
-type CreateRoomRequest struct {
-	ID string `json:"id"`
-}
-
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO(), func(o *config.LoadOptions) error {
 		o.Region = os.Getenv("region")
@@ -75,14 +71,14 @@ func init() {
 	})
 
 	r.PUT("/room", func(c *gin.Context) {
-		createRoomRequest := &CreateRoomRequest{}
+		createRoomRequest := &room.CreateRoomRequest{}
 		err = c.BindJSON(&createRoomRequest)
 
 		if err != nil {
 			return
 		}
 
-		room, err := room.NewRoom(createRoomRequest.ID, client)
+		room, err := room.NewRoom(createRoomRequest, client)
 
 		if err != nil {
 			log.Default().Println(err)

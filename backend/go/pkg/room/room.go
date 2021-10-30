@@ -13,6 +13,11 @@ import (
 	"github.com/twinj/uuid"
 )
 
+type CreateRoomRequest struct {
+	ID      string   `json:"id"`
+	Options []string `json:"options"`
+}
+
 type Room struct {
 	PK     string `dynamodbav:"PK" json:"-"`
 	SK     string `dynamodbav:"SK" json:"-"`
@@ -20,8 +25,9 @@ type Room struct {
 	GSI1SK string `dynamodbav:"GSI1SK" json:"-"`
 	Type   string `dynamodbav:"type" json:"-"`
 
-	ID            string `json:"id"`
-	OwnershipHash string `json:"ownershipHash"`
+	ID            string   `json:"id"`
+	OwnershipHash string   `json:"ownershipHash"`
+	Options       []string `json:"options"`
 }
 
 type PublicRoom struct {
@@ -42,15 +48,16 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 	return &PublicRoom{ID: room.ID}, nil
 }
 
-func NewRoom(id string, client *dynamodb.Client) (*Room, error) {
+func NewRoom(request *CreateRoomRequest, client *dynamodb.Client) (*Room, error) {
 	ownershipHash := uuid.NewV4().String()
 
 	room := &Room{
-		PK:            fmt.Sprintf("ROOM#%s", id),
-		SK:            fmt.Sprintf("ROOM#%s", id),
+		PK:            fmt.Sprintf("ROOM#%s", request.ID),
+		SK:            fmt.Sprintf("ROOM#%s", request.ID),
 		Type:          dynamodbTypes.Room,
-		ID:            id,
+		ID:            request.ID,
 		OwnershipHash: ownershipHash,
+		Options:       request.Options,
 		GSI1PK:        fmt.Sprintf("ROOM#%s", ownershipHash),
 		GSI1SK:        fmt.Sprintf("ROOM#%s", ownershipHash),
 	}
