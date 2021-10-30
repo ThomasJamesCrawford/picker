@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"picker/backend/go/pkg/room"
@@ -20,6 +21,10 @@ var client *dynamodb.Client
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	return ginLambda.ProxyWithContext(ctx, req)
+}
+
+type CreateRoomRequest struct {
+	ID string `json:"id"`
 }
 
 func init() {
@@ -67,6 +72,25 @@ func init() {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"available": false})
+	})
+
+	r.PUT("/room", func(c *gin.Context) {
+		createRoomRequest := &CreateRoomRequest{}
+		err = c.BindJSON(&createRoomRequest)
+
+		if err != nil {
+			return
+		}
+
+		room, err := room.NewRoom(createRoomRequest.ID, client)
+
+		if err != nil {
+			log.Default().Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		c.JSON(http.StatusOK, room)
 	})
 
 	ginLambda = ginadapter.NewV2(r)

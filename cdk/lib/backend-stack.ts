@@ -14,6 +14,12 @@ export class BackendStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
+    table.addGlobalSecondaryIndex({
+      partitionKey: { name: "GSI1PK", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "GSI1SK", type: dynamodb.AttributeType.STRING },
+      indexName: "GSI1",
+    });
+
     const fatLambda = new lambda.GoFunction(this, "handler", {
       entry: "../backend/go/cmd/fat-lambda",
       environment: {

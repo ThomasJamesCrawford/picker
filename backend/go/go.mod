@@ -44,6 +44,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.2.0 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/twinj/uuid v1.0.0
 )
 
 require github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.5.0 // indirect
+
+require (
+	github.com/myesui/uuid v1.0.0 // indirect
+	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
+)

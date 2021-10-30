@@ -1,4 +1,4 @@
-package types
+package dynamodbTypes
 
 const (
 	Room   = "room"

@@ -4,17 +4,21 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"picker/backend/go/pkg/dynamodbTypes"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/twinj/uuid"
 )
 
 type Room struct {
-	PK   string `dynamodbav:"PK" json:"-"`
-	SK   string `dynamodbav:"SK" json:"-"`
-	Type string `dynamodbav:"type" json:"-"`
+	PK     string `dynamodbav:"PK" json:"-"`
+	SK     string `dynamodbav:"SK" json:"-"`
+	GSI1PK string `dynamodbav:"GSI1PK" json:"-"`
+	GSI1SK string `dynamodbav:"GSI1SK" json:"-"`
+	Type   string `dynamodbav:"type" json:"-"`
 
 	ID            string `json:"id"`
 	OwnershipHash string `json:"ownershipHash"`
@@ -36,6 +40,38 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 	}
 
 	return &PublicRoom{ID: room.ID}, nil
+}
+
+func NewRoom(id string, client *dynamodb.Client) (*Room, error) {
+	ownershipHash := uuid.NewV4().String()
+
+	room := &Room{
+		PK:            fmt.Sprintf("ROOM#%s", id),
+		SK:            fmt.Sprintf("ROOM#%s", id),
+		Type:          dynamodbTypes.Room,
+		ID:            id,
+		OwnershipHash: ownershipHash,
+		GSI1PK:        fmt.Sprintf("ROOM#%s", ownershipHash),
+		GSI1SK:        fmt.Sprintf("ROOM#%s", ownershipHash),
+	}
+
+	marshalledRoom, marshallErr := attributevalue.MarshalMap(room)
+
+	if marshallErr != nil {
+		panic(marshallErr)
+	}
+
+	_, err := client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName:           aws.String(os.Getenv("table")),
+		Item:                marshalledRoom,
+		ConditionExpression: aws.String("attribute_not_exists(PK) and attribute_not_exists(SK)"),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return room, nil
 }
 
 func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
