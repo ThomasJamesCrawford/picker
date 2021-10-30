@@ -6,11 +6,12 @@
 	import Info from '$lib/icons/info.svelte';
 	import Loading from '$lib/icons/loading.svelte';
 	import { debounce } from '$lib/helpers/debounce';
+	import { nanoid } from 'nanoid';
 
 	let options: string[] = [];
 
 	let optionInputValue = '';
-	let shortLink = 'gS4b';
+	let shortLink = nanoid(10);
 
 	let shortLinkValidated = true;
 	let shortLinkvalidationLoading = false;
@@ -40,9 +41,6 @@
 			})
 	);
 
-	/**
-	 * Fake for now, needs to hit api (debounced)
-	 */
 	$: if (shortLink) {
 		shortLinkValidated = false;
 		shortLinkvalidationLoading = true;
@@ -51,7 +49,7 @@
 </script>
 
 <div class="container mx-auto max-w-xl">
-	<form class="p-4">
+	<form class="p-4" on:submit|preventDefault="{}">
 		<div class="form-control my-2">
 			<label for="username" class="label justify-start space-x-2">
 				<span class="label-text">Short link</span>
