@@ -51,5 +51,6 @@ require github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.5.0 // indirect
 
 require (
 	github.com/myesui/uuid v1.0.0 // indirect
+	github.com/rs/cors v1.8.0
 	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
 )

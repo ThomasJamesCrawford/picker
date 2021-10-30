@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
+	cors "github.com/rs/cors/wrapper/gin"
 )
 
 var ginLambda *ginadapter.GinLambdaV2
@@ -36,6 +37,9 @@ func init() {
 	client = dynamodb.NewFromConfig(cfg)
 
 	r := gin.Default()
+
+	// api gateway handles CORS for us
+	r.Use(cors.AllowAll())
 
 	r.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
@@ -70,7 +74,7 @@ func init() {
 		c.JSON(http.StatusOK, gin.H{"available": false})
 	})
 
-	r.PUT("/room", func(c *gin.Context) {
+	r.POST("/room", func(c *gin.Context) {
 		createRoomRequest := &room.CreateRoomRequest{}
 		err = c.BindJSON(&createRoomRequest)
 
@@ -82,7 +86,7 @@ func init() {
 
 		if err != nil {
 			log.Default().Println(err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
