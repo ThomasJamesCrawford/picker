@@ -6,6 +6,8 @@ import { FrontendStack } from "../lib/frontend-stack";
 
 const app = new cdk.App();
 
-new BackendStack(app, "backend");
+const frontend = new FrontendStack(app, "frontend");
 
-new FrontendStack(app, "frontend");
+new BackendStack(app, "backend", {
+  distribution: frontend.distribution,
+}).addDependency(frontend);
