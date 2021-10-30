@@ -16,6 +16,8 @@
 	let shortLinkValidated = true;
 	let shortLinkvalidationLoading = false;
 
+	let submitLoading = false;
+
 	const addOption = () => {
 		if (optionInputValue !== '') {
 			options = [...options, optionInputValue];
@@ -46,10 +48,24 @@
 		shortLinkvalidationLoading = true;
 		fetchIsAvailable(shortLink);
 	}
+
+	$: submit = () => {
+		submitLoading = true;
+
+		fetch(`${import.meta.env.VITE_API_URL}/room`, {
+			method: 'POST',
+			headers: {
+				accepts: 'application/json'
+			},
+			body: JSON.stringify({ id: shortLink, options })
+		}).finally(() => {
+			submitLoading = false;
+		});
+	};
 </script>
 
 <div class="container mx-auto max-w-xl">
-	<form class="p-4" on:submit|preventDefault="{}">
+	<form class="p-4" on:submit|preventDefault={submit}>
 		<div class="form-control my-2">
 			<label for="username" class="label justify-start space-x-2">
 				<span class="label-text">Short link</span>
@@ -97,6 +113,8 @@
 				<span class="label-text">Question</span>
 			</label>
 			<textarea
+				required
+				aria-required
 				class="textarea h-24 textarea-bordered w-full"
 				placeholder="Which option would you like to select?"
 			/>
@@ -150,7 +168,8 @@
 			<button
 				disabled={options.length <= 0 || !shortLinkValidated}
 				aria-disabled={options.length <= 0 || !shortLinkValidated}
-				class="btn btn-primary">Create pickr</button
+				class="btn btn-primary"
+				class:loading={submitLoading}>Create pickr</button
 			>
 		</div>
 	</form>
