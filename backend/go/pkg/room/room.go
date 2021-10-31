@@ -10,12 +10,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/twinj/uuid"
 )
 
 type CreateRoomRequest struct {
-	ID      string   `json:"id,omitempty"`
-	Options []string `json:"options"`
+	ID       string   `json:"id" binding:"required,alphanum,min=1,max=100"`
+	Options  []string `json:"options" binding:"required,gt=0,dive,required,min=1,max=1000"`
+	Question string   `json:"question" binding:"required,min=1,max=1500"`
 }
 
 type Room struct {
@@ -25,13 +25,16 @@ type Room struct {
 	GSI1SK string `dynamodbav:"GSI1SK" json:"-"`
 	Type   string `dynamodbav:"type" json:"-"`
 
-	ID            string   `json:"id"`
-	OwnershipHash string   `json:"ownershipHash"`
-	Options       []string `json:"options"`
+	ID       string   `json:"id"`
+	Options  []string `json:"options"`
+	Question string   `json:"question"`
+	OwnerID  string   `json:"ownerID"`
 }
 
 type PublicRoom struct {
-	ID string `json:"id"`
+	ID       string   `json:"id"`
+	Options  []string `json:"options"`
+	Question string   `json:"question"`
 }
 
 func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
@@ -45,21 +48,24 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 		return nil, nil
 	}
 
-	return &PublicRoom{ID: room.ID}, nil
+	return &PublicRoom{
+		ID:       room.ID,
+		Options:  room.Options,
+		Question: room.Question,
+	}, nil
 }
 
-func NewRoom(request *CreateRoomRequest, client *dynamodb.Client) (*Room, error) {
-	ownershipHash := uuid.NewV4().String()
-
+func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client) (*Room, error) {
 	room := &Room{
-		PK:            fmt.Sprintf("ROOM#%s", request.ID),
-		SK:            fmt.Sprintf("ROOM#%s", request.ID),
-		Type:          dynamodbTypes.Room,
-		ID:            request.ID,
-		OwnershipHash: ownershipHash,
-		Options:       request.Options,
-		GSI1PK:        fmt.Sprintf("ROOM#%s", ownershipHash),
-		GSI1SK:        fmt.Sprintf("ROOM#%s", ownershipHash),
+		PK:       fmt.Sprintf("ROOM#%s", request.ID),
+		SK:       fmt.Sprintf("ROOM#%s", request.ID),
+		Type:     dynamodbTypes.Room,
+		ID:       request.ID,
+		Options:  request.Options,
+		Question: request.Question,
+		OwnerID:  userID,
+		GSI1PK:   fmt.Sprintf("USER#%s", userID),
+		GSI1SK:   fmt.Sprintf("ROOM#%s", request.ID),
 	}
 
 	marshalledRoom, marshallErr := attributevalue.MarshalMap(room)

@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"picker/backend/go/pkg/environment"
 	"picker/backend/go/pkg/middleware"
@@ -98,16 +98,16 @@ func init() {
 	api.POST("/room", func(c *gin.Context) {
 		createRoomRequest := &room.CreateRoomRequest{}
 
-		err = c.BindJSON(&createRoomRequest)
+		err = c.ShouldBindJSON(&createRoomRequest)
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
-		createRoomRequest.ID = url.QueryEscape(createRoomRequest.ID)
+		userID := fmt.Sprintf("%v", sessions.Default(c).Get("user_id"))
 
-		room, err := room.NewRoom(createRoomRequest, client)
+		room, err := room.NewRoom(createRoomRequest, userID, client)
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
