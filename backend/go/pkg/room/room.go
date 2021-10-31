@@ -14,7 +14,7 @@ import (
 )
 
 type CreateRoomRequest struct {
-	ID      string   `json:"id"`
+	ID      string   `json:"id,omitempty"`
 	Options []string `json:"options"`
 }
 

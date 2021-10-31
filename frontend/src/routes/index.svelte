@@ -18,6 +18,8 @@
 
 	let submitLoading = false;
 
+	let errorTooltipOpen = false;
+
 	const addOption = () => {
 		if (optionInputValue !== '') {
 			options = [...options, optionInputValue];
@@ -43,10 +45,16 @@
 			})
 	);
 
-	$: if (shortLink) {
+	$: if (/^[a-zA-Z0-9_-]+$/.test(shortLink)) {
+		errorTooltipOpen = false;
 		shortLinkValidated = false;
 		shortLinkvalidationLoading = true;
 		fetchIsAvailable(shortLink);
+	} else {
+		shortLink = shortLink.replace(/[^a-zA-Z0-9_-]/gi, '');
+
+		errorTooltipOpen = true;
+		setTimeout(() => (errorTooltipOpen = false), 2000);
 	}
 
 	$: submit = () => {
@@ -70,37 +78,46 @@
 			<label for="username" class="label justify-start space-x-2">
 				<span class="label-text">Short link</span>
 				<span
-					data-tip="This is the url where your pickr will live!"
-					class="text-gray-500 tooltip-right tooltip tooltip-info"
+					data-tip="This is the url where your pickr will live"
+					class="text-gray-500 tooltip-right tooltip tooltip-accent"
 				>
 					<Info />
 				</span>
 			</label>
-			<label class="input-group">
-				<span>pickr.com/</span>
-				<input
-					id="short_link"
-					bind:value={shortLink}
-					type="text"
-					placeholder="honeylashes"
-					class="input input-bordered w-full z-10"
-				/>
-				<button
-					type="button"
-					class:btn-success={shortLinkValidated}
-					class:btn-error={!shortLinkValidated && !shortLinkvalidationLoading}
-					class:btn-info={shortLinkvalidationLoading}
-					class="btn no-animation"
-				>
-					{#if shortLinkValidated}
-						<Check />
-					{:else if shortLinkvalidationLoading}
-						<Loading />
-					{:else}
-						<Alert />
-					{/if}
-				</button>
-			</label>
+			<span
+				data-tip="Only letters and numbers are allowed"
+				class="tooltip-accent tooltip-bottom"
+				class:tooltip={errorTooltipOpen}
+				class:tooltip-open={errorTooltipOpen}
+			>
+				<label class="input-group">
+					<span>pickr.com/</span>
+					<input
+						title="Only letters and numbers allowed"
+						pattern="^[a-zA-Z0-9_-]*$"
+						id="short_link"
+						bind:value={shortLink}
+						type="text"
+						placeholder="honeylashes"
+						class="input input-bordered w-full z-10"
+					/>
+					<button
+						type="button"
+						class:btn-success={shortLinkValidated}
+						class:btn-error={!shortLinkValidated && !shortLinkvalidationLoading}
+						class:btn-info={shortLinkvalidationLoading}
+						class="btn no-animation"
+					>
+						{#if shortLinkValidated}
+							<Check />
+						{:else if shortLinkvalidationLoading}
+							<Loading />
+						{:else}
+							<Alert />
+						{/if}
+					</button>
+				</label>
+			</span>
 			{#if !shortLinkValidated && !shortLinkvalidationLoading}
 				<label for="short_link" class="label">
 					<span class="label-text-alt">That short url is not available!</span>
@@ -124,8 +141,8 @@
 			<label for="fef" class="label justify-start space-x-2">
 				<span class="label-text">Add some options</span>
 				<span
-					data-tip="Each option can only ever be selected by one pickee (no duplicate selections)"
-					class="text-gray-500 tooltip-right tooltip tooltip-info"
+					data-tip="Options to choose from"
+					class="text-gray-500 tooltip-bottom tooltip tooltip-accent"
 				>
 					<Info />
 				</span>
