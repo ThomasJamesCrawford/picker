@@ -2,6 +2,7 @@ import * as cdk from "@aws-cdk/core";
 import * as lambda from "@aws-cdk/aws-lambda-go";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as iam from "@aws-cdk/aws-iam";
+import * as logs from "@aws-cdk/aws-logs";
 import { HttpApi, HttpMethod } from "@aws-cdk/aws-apigatewayv2";
 import { LambdaProxyIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
 import { SSM_BASE_PATH } from "./shared-parameters";
@@ -38,6 +39,7 @@ export class BackendStack extends cdk.Stack {
         ssm_path: SSM_BASE_PATH,
         session_cookie: props.sessionCookie.stringValue,
       },
+      logRetention: logs.RetentionDays.ONE_MONTH,
     });
 
     fatLambda.role?.attachInlinePolicy(
