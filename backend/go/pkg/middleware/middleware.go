@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -14,17 +13,14 @@ func UserId() gin.HandlerFunc {
 		session := sessions.Default(c)
 		sessionID := session.Get("id")
 
-		session.Options(sessions.Options{
-			SameSite: http.SameSiteStrictMode,
-			HttpOnly: true,
-			MaxAge:   0,
-		})
-
 		if sessionID == nil {
 			session.Set("id", uuid.NewV4())
-		}
+			err := session.Save()
 
-		session.Save()
+			if err != nil {
+				panic(err)
+			}
+		}
 
 		log.Default().Printf("UserID %s accessing %s", session.Get("id"), c.Request.URL)
 	}

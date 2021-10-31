@@ -60,6 +60,5 @@ require (
 	github.com/gin-contrib/sessions v0.0.4
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/myesui/uuid v1.0.0 // indirect
-	github.com/rs/cors v1.8.0
 	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
 )

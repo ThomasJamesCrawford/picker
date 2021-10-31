@@ -2,7 +2,6 @@ package environment
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -40,8 +39,6 @@ func New(client *ssm.Client, path *string) *Environment {
 	if decodeErr != nil {
 		panic(err)
 	}
-
-	log.Default().Println(environmentMap)
 
 	return environment
 }

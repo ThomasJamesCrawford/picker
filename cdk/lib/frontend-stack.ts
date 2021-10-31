@@ -2,12 +2,16 @@ import * as cdk from "@aws-cdk/core";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as s3deploy from "@aws-cdk/aws-s3-deployment";
 import * as cloudfront from "@aws-cdk/aws-cloudfront";
-import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
+import { HttpApi } from "@aws-cdk/aws-apigatewayv2";
+import { StringParameter } from "@aws-cdk/aws-ssm";
+
+interface FrontendStackProps extends cdk.StackProps {
+  httpApi: HttpApi;
+  sessionCookie: StringParameter;
+}
 
 export class FrontendStack extends cdk.Stack {
-  public distribution: CloudFrontWebDistribution;
-
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
     const svelteBucket = new s3.Bucket(this, "svelte-bucket", {
@@ -25,6 +29,7 @@ export class FrontendStack extends cdk.Stack {
       "distribution",
       {
         originConfigs: [
+          // Serve the S3 bucket
           {
             s3OriginSource: {
               s3BucketSource: svelteBucket,
@@ -32,11 +37,36 @@ export class FrontendStack extends cdk.Stack {
             },
             behaviors: [{ isDefaultBehavior: true }],
           },
+          // Proxy the API Gateway
+          {
+            behaviors: [
+              {
+                pathPattern: "/api/*",
+                allowedMethods: cloudfront.CloudFrontAllowedMethods.ALL,
+                /**
+                 * Block CloudFront from caching any requests
+                 *
+                 * maxTtl could be set higher to allow cache-control headers set from applications to cause CloudFront caching
+                 */
+                maxTtl: cdk.Duration.seconds(0),
+                minTtl: cdk.Duration.seconds(0),
+                defaultTtl: cdk.Duration.seconds(0),
+                forwardedValues: {
+                  queryString: true,
+                  cookies: {
+                    forward: "whitelist",
+                    whitelistedNames: [props.sessionCookie.stringValue],
+                  },
+                },
+              },
+            ],
+            customOriginSource: {
+              domainName: cdk.Fn.parseDomainName(props.httpApi.apiEndpoint),
+            },
+          },
         ],
       }
     );
-
-    this.distribution = distribution;
 
     new s3deploy.BucketDeployment(this, "static-svelte-website-deployment", {
       /**
@@ -55,7 +85,7 @@ export class FrontendStack extends cdk.Stack {
               "-c",
               [
                 `pnpm install`,
-                "pnpm run build",
+                "VITE_API_URL=/api pnpm run build",
                 "cp -r /asset-input/build/* /asset-output/",
               ].join(" && "),
             ],

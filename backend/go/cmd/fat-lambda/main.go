@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"picker/backend/go/pkg/environment"
@@ -17,7 +18,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	cors "github.com/rs/cors/wrapper/gin"
 )
 
 var ginLambda *ginadapter.GinLambdaV2
@@ -50,20 +50,16 @@ func init() {
 	r := gin.Default()
 
 	store := cookie.NewStore([]byte(ssmEnvironment.CookieSecret))
-	r.Use(sessions.Sessions("session", store))
+	r.Use(sessions.Sessions(os.Getenv("session_cookie"), store))
+
+	log.Default().Printf("SESSION_COOKIE: %s, SIGNING_VALUE: %s", os.Getenv("session_cookie"), ssmEnvironment.CookieSecret)
 
 	// Set a user ID cookie on every request
 	r.Use(middleware.UserId())
 
-	// api gateway already handles CORS for us
-	r.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"*"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-	}))
+	api := r.Group("/api")
 
-	r.GET("/publicRoom/:id", func(c *gin.Context) {
+	api.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client)
 
@@ -79,7 +75,7 @@ func init() {
 		c.JSON(http.StatusOK, res)
 	})
 
-	r.GET("/publicRoom/:id/available", func(c *gin.Context) {
+	api.GET("/publicRoom/:id/available", func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client)
 
@@ -100,7 +96,7 @@ func init() {
 		c.JSON(http.StatusOK, gin.H{"available": false})
 	})
 
-	r.POST("/room", func(c *gin.Context) {
+	api.POST("/room", func(c *gin.Context) {
 		createRoomRequest := &room.CreateRoomRequest{}
 		err = c.BindJSON(&createRoomRequest)
 

@@ -2,17 +2,18 @@ import * as cdk from "@aws-cdk/core";
 import * as lambda from "@aws-cdk/aws-lambda-go";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as iam from "@aws-cdk/aws-iam";
-import { CorsHttpMethod, HttpApi, HttpMethod } from "@aws-cdk/aws-apigatewayv2";
+import { HttpApi, HttpMethod } from "@aws-cdk/aws-apigatewayv2";
 import { LambdaProxyIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
-import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
+import { SSM_BASE_PATH } from "./shared-parameters";
+import { StringParameter } from "@aws-cdk/aws-ssm";
 
 interface BackendStackProps extends cdk.StackProps {
-  distribution: CloudFrontWebDistribution;
+  sessionCookie: StringParameter;
 }
 
-const SSM_BASE_PATH = "/picker/";
-
 export class BackendStack extends cdk.Stack {
+  public httpApi: HttpApi;
+
   constructor(scope: cdk.Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
@@ -35,6 +36,7 @@ export class BackendStack extends cdk.Stack {
         region: this.region,
         GIN_MODE: "release",
         ssm_path: SSM_BASE_PATH,
+        session_cookie: props.sessionCookie.stringValue,
       },
     });
 
@@ -54,30 +56,25 @@ export class BackendStack extends cdk.Stack {
 
     table.grantReadWriteData(fatLambda);
 
-    const httpApi = new HttpApi(this, "api-gateway", {
-      corsPreflight: {
-        allowHeaders: ["*"],
-        allowMethods: [CorsHttpMethod.ANY],
-        allowOrigins: [
-          "http://localhost:3000",
-          `https://${props.distribution.distributionDomainName}`,
-        ],
-        maxAge: cdk.Duration.minutes(10),
-        allowCredentials: true,
-      },
-    });
+    /**
+     * This is behind a CloudFront distribution
+     *
+     * TODO Needs an authorizer to only accept requests from CloudFront
+     */
+    const httpApi = new HttpApi(this, "api-gateway");
 
     httpApi.addRoutes({
-      path: "/{proxy+}",
+      path: "/api/{proxy+}",
       methods: [HttpMethod.ANY],
       integration: new LambdaProxyIntegration({
         handler: fatLambda,
       }),
     });
 
+    this.httpApi = httpApi;
+
     new cdk.CfnOutput(this, "httpGateway", {
       value: httpApi.apiEndpoint,
-      description: "This needs to go into the frontend .env",
     });
   }
 }
