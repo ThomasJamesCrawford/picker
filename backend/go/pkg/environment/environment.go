@@ -13,6 +13,7 @@ type Environment struct {
 }
 
 // these will hang around for the entire life of the lambda
+// TODO make them expire after X mins
 func New(client *ssm.Client, path *string) *Environment {
 	res, err := client.GetParametersByPath(context.TODO(), &ssm.GetParametersByPathInput{
 		Path:           path,
