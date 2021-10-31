@@ -8,6 +8,7 @@
 	import { debounce } from '$lib/helpers/debounce';
 	import { customAlphabet } from 'nanoid';
 	import { APP_NAME } from '$lib/constants';
+	import { goto } from '$app/navigation';
 
 	const nanoid = customAlphabet(
 		'useandom26T198340PX75pxJACKVERYMINDBUSHWOLFGQZbfghjklqvwyzrict',
@@ -26,6 +27,7 @@
 	let submitLoading = false;
 
 	let errorTooltipOpen = false;
+	let error = '';
 
 	const addOption = () => {
 		if (optionInputValue !== '') {
@@ -66,6 +68,7 @@
 
 	$: submit = () => {
 		submitLoading = true;
+		error = '';
 
 		fetch(`${import.meta.env.VITE_API_URL}/room`, {
 			method: 'POST',
@@ -73,9 +76,12 @@
 				accepts: 'application/json'
 			},
 			body: JSON.stringify({ id: shortLink, options, question })
-		}).finally(() => {
-			submitLoading = false;
-		});
+		})
+			.then(() => goto(`/${shortLink}`))
+			.catch(() => (error = 'Something went wrong..'))
+			.finally(() => {
+				submitLoading = false;
+			});
 	};
 </script>
 
@@ -197,5 +203,8 @@
 				class:loading={submitLoading}>Create {APP_NAME}</button
 			>
 		</div>
+		{#if error}
+			<div class="alert alert-warning">{error}</div>
+		{/if}
 	</form>
 </div>

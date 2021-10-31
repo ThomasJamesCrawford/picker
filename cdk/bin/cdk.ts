@@ -13,12 +13,7 @@ const backend = new BackendStack(app, "backend", {
   sessionCookie: sharedParameters.sessionCookie,
 });
 
-backend.addDependency(sharedParameters);
-
-const frontend = new FrontendStack(app, "frontend", {
+new FrontendStack(app, "frontend", {
   httpApi: backend.httpApi,
   sessionCookie: sharedParameters.sessionCookie,
 });
-
-frontend.addDependency(backend);
-frontend.addDependency(sharedParameters);
