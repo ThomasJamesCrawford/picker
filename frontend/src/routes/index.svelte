@@ -7,6 +7,7 @@
 	import Loading from '$lib/icons/loading.svelte';
 	import { debounce } from '$lib/helpers/debounce';
 	import { customAlphabet } from 'nanoid';
+	import { APP_NAME } from '$lib/constants';
 
 	const nanoid = customAlphabet(
 		'useandom26T198340PX75pxJACKVERYMINDBUSHWOLFGQZbfghjklqvwyzrict',
@@ -84,7 +85,7 @@
 			<label for="username" class="label justify-start space-x-2">
 				<span class="label-text">Short link</span>
 				<span
-					data-tip="This is the url where your pickr will live"
+					data-tip="This is the url where your {APP_NAME} will live"
 					class="text-gray-500 tooltip-right tooltip tooltip-accent"
 				>
 					<Info />
@@ -97,7 +98,7 @@
 				class:tooltip-open={errorTooltipOpen}
 			>
 				<label class="input-group">
-					<span>pickr.com/</span>
+					<span>{APP_NAME}.com/</span>
 					<input
 						title="Only letters and numbers allowed"
 						pattern="^[a-zA-Z0-9]*$"
@@ -193,7 +194,7 @@
 				disabled={options.length <= 0 || !shortLinkValidated}
 				aria-disabled={options.length <= 0 || !shortLinkValidated}
 				class="btn btn-primary"
-				class:loading={submitLoading}>Create pickr</button
+				class:loading={submitLoading}>Create {APP_NAME}</button
 			>
 		</div>
 	</form>

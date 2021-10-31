@@ -5,6 +5,7 @@ import * as cloudfront from "@aws-cdk/aws-cloudfront";
 import { HttpApi } from "@aws-cdk/aws-apigatewayv2";
 import { StringParameter } from "@aws-cdk/aws-ssm";
 import { PriceClass } from "@aws-cdk/aws-cloudfront";
+import { APP_NAME } from "./shared-parameters";
 
 interface FrontendStackProps extends cdk.StackProps {
   httpApi: HttpApi;
@@ -87,7 +88,7 @@ export class FrontendStack extends cdk.Stack {
               "-c",
               [
                 `pnpm install`,
-                "VITE_API_URL=/api pnpm run build",
+                `VITE_API_URL=/api VITE_APP_NAME=${APP_NAME} pnpm run build`,
                 "cp -r /asset-input/build/* /asset-output/",
               ].join(" && "),
             ],

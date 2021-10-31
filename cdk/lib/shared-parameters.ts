@@ -2,7 +2,7 @@ import * as cdk from "@aws-cdk/core";
 import * as ssm from "@aws-cdk/aws-ssm";
 import { StringParameter } from "@aws-cdk/aws-ssm";
 
-const APP_NAME = "picker";
+export const APP_NAME = "pickr";
 
 export const SSM_BASE_PATH = `/${APP_NAME}/`;
 
