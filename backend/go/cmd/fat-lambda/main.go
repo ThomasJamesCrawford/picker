@@ -28,7 +28,9 @@ var ssmClient *ssm.Client
 var ssmEnvironment *environment.Environment
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	// Does this really not map the cookies
+	// This doesn't map the cookies
+	// API Gateway strips the cookie header into req.Cookies, but aws-lambda-go-api-proxy doesn't seem to take this into account
+	// https://github.com/awslabs/aws-lambda-go-api-proxy/issues/108
 	req.Headers["cookie"] = strings.Join(req.Cookies, ",")
 	return ginLambda.ProxyWithContext(ctx, req)
 }
