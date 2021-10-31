@@ -1,6 +1,7 @@
 import * as cdk from "@aws-cdk/core";
 import * as lambda from "@aws-cdk/aws-lambda-go";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
+import * as iam from "@aws-cdk/aws-iam";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "@aws-cdk/aws-apigatewayv2";
 import { LambdaProxyIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
 import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
@@ -8,6 +9,9 @@ import { CloudFrontWebDistribution } from "@aws-cdk/aws-cloudfront";
 interface BackendStackProps extends cdk.StackProps {
   distribution: CloudFrontWebDistribution;
 }
+
+const SSM_BASE_PATH = "/picker/";
+
 export class BackendStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
@@ -30,8 +34,23 @@ export class BackendStack extends cdk.Stack {
         table: table.tableName,
         region: this.region,
         GIN_MODE: "release",
+        ssm_path: SSM_BASE_PATH,
       },
     });
+
+    fatLambda.role?.attachInlinePolicy(
+      new iam.Policy(this, "lambda-ssm", {
+        statements: [
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ["ssm:GetParametersByPath"],
+            resources: [
+              `arn:aws:ssm:${this.region}:${this.account}:parameter${SSM_BASE_PATH}`,
+            ],
+          }),
+        ],
+      })
+    );
 
     table.grantReadWriteData(fatLambda);
 

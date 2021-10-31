@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"picker/backend/go/pkg/environment"
 	"picker/backend/go/pkg/middleware"
 	"picker/backend/go/pkg/room"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -21,6 +23,9 @@ import (
 var ginLambda *ginadapter.GinLambdaV2
 
 var client *dynamodb.Client
+var ssmClient *ssm.Client
+
+var ssmEnvironment *environment.Environment
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	return ginLambda.ProxyWithContext(ctx, req)
@@ -37,15 +42,20 @@ func init() {
 	}
 
 	client = dynamodb.NewFromConfig(cfg)
+	ssmClient = ssm.NewFromConfig(cfg)
+
+	ssmPath := os.Getenv("ssm_path")
+	ssmEnvironment = environment.New(ssmClient, &ssmPath)
 
 	r := gin.Default()
 
-	store := cookie.NewStore([]byte("secret"))
+	store := cookie.NewStore([]byte(ssmEnvironment.CookieSecret))
 	r.Use(sessions.Sessions("session", store))
 
+	// Set a user ID cookie on every request
 	r.Use(middleware.UserId())
 
-	// api gateway handles CORS for us
+	// api gateway already handles CORS for us
 	r.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"*"},
