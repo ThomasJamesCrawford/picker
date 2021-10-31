@@ -6,12 +6,18 @@
 	import Info from '$lib/icons/info.svelte';
 	import Loading from '$lib/icons/loading.svelte';
 	import { debounce } from '$lib/helpers/debounce';
-	import { nanoid } from 'nanoid';
+	import { customAlphabet } from 'nanoid';
+
+	const nanoid = customAlphabet(
+		'useandom26T198340PX75pxJACKVERYMINDBUSHWOLFGQZbfghjklqvwyzrict',
+		10
+	);
 
 	let options: string[] = [];
+	let question = '';
 
 	let optionInputValue = '';
-	let shortLink = nanoid(10);
+	let shortLink = nanoid();
 
 	let shortLinkValidated = true;
 	let shortLinkvalidationLoading = false;
@@ -45,13 +51,13 @@
 			})
 	);
 
-	$: if (/^[a-zA-Z0-9_-]+$/.test(shortLink)) {
+	$: if (/^[a-zA-Z0-9]+$/.test(shortLink)) {
 		errorTooltipOpen = false;
 		shortLinkValidated = false;
 		shortLinkvalidationLoading = true;
 		fetchIsAvailable(shortLink);
 	} else {
-		shortLink = shortLink.replace(/[^a-zA-Z0-9_-]/gi, '');
+		shortLink = shortLink.replace(/[^a-zA-Z0-9]/gi, '');
 
 		errorTooltipOpen = true;
 		setTimeout(() => (errorTooltipOpen = false), 2000);
@@ -65,7 +71,7 @@
 			headers: {
 				accepts: 'application/json'
 			},
-			body: JSON.stringify({ id: shortLink, options })
+			body: JSON.stringify({ id: shortLink, options, question })
 		}).finally(() => {
 			submitLoading = false;
 		});
@@ -94,11 +100,11 @@
 					<span>pickr.com/</span>
 					<input
 						title="Only letters and numbers allowed"
-						pattern="^[a-zA-Z0-9_-]*$"
+						pattern="^[a-zA-Z0-9]*$"
 						id="short_link"
 						bind:value={shortLink}
 						type="text"
-						placeholder="honeylashes"
+						placeholder="myurl"
 						class="input input-bordered w-full z-10"
 					/>
 					<button
@@ -130,6 +136,7 @@
 				<span class="label-text">Question</span>
 			</label>
 			<textarea
+				bind:value={question}
 				required
 				aria-required
 				class="textarea h-24 textarea-bordered w-full"
