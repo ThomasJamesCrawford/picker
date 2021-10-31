@@ -4,6 +4,7 @@ import * as s3deploy from "@aws-cdk/aws-s3-deployment";
 import * as cloudfront from "@aws-cdk/aws-cloudfront";
 import { HttpApi } from "@aws-cdk/aws-apigatewayv2";
 import { StringParameter } from "@aws-cdk/aws-ssm";
+import { PriceClass } from "@aws-cdk/aws-cloudfront";
 
 interface FrontendStackProps extends cdk.StackProps {
   httpApi: HttpApi;
@@ -28,6 +29,7 @@ export class FrontendStack extends cdk.Stack {
       this,
       "distribution",
       {
+        priceClass: PriceClass.PRICE_CLASS_ALL,
         originConfigs: [
           // Serve the S3 bucket
           {
