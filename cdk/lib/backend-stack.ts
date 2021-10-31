@@ -74,9 +74,5 @@ export class BackendStack extends cdk.Stack {
     });
 
     this.httpApi = httpApi;
-
-    new cdk.CfnOutput(this, "httpGateway", {
-      value: httpApi.apiEndpoint,
-    });
   }
 }

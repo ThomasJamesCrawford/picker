@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"picker/backend/go/pkg/environment"
 	"picker/backend/go/pkg/middleware"
 	"picker/backend/go/pkg/room"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -28,6 +28,8 @@ var ssmClient *ssm.Client
 var ssmEnvironment *environment.Environment
 
 func Handler(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	// Does this really not map the cookies
+	req.Headers["cookie"] = strings.Join(req.Cookies, ",")
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
@@ -51,8 +53,6 @@ func init() {
 
 	store := cookie.NewStore([]byte(ssmEnvironment.CookieSecret))
 	r.Use(sessions.Sessions(os.Getenv("session_cookie"), store))
-
-	log.Default().Printf("SESSION_COOKIE: %s, SIGNING_VALUE: %s", os.Getenv("session_cookie"), ssmEnvironment.CookieSecret)
 
 	// Set a user ID cookie on every request
 	r.Use(middleware.UserId())
