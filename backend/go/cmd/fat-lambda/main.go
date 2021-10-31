@@ -82,10 +82,6 @@ func init() {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client)
 
-		session := sessions.Default(c)
-		session.Set("nice", 1)
-		session.Save()
-
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
