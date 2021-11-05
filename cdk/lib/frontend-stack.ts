@@ -37,7 +37,7 @@ export class FrontendStack extends cdk.Stack {
         /**
          * SPA routing will 404, needs to be handled client side
          *
-         * API Gateway will get hit by this too
+         * API Gateway will get hit by this too (probably doesn't matter)
          */
         errorConfigurations: [
           {
