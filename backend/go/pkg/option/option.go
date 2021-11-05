@@ -32,10 +32,11 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 	optionID := uuid.NewV4().String()
 
 	return &Option{
-		PK:     fmt.Sprintf("ROOM#%s", roomID),
-		SK:     fmt.Sprintf("OPTION#%s", optionID),
+		PK: fmt.Sprintf("ROOM#%s", roomID),
+		// This lets us use a BEGINS_WITH in our single table to pull in a room and all the options with one query
+		SK:     fmt.Sprintf("ROOM_OPTION#%s", optionID),
 		GSI1PK: fmt.Sprintf("USER#%s", userID),
-		GSI1SK: fmt.Sprintf("OPTION#%s", optionID),
+		GSI1SK: fmt.Sprintf("ROOM_OPTION#%s", optionID),
 		Type:   dynamodbTypes.Option,
 
 		ID:     optionID,
@@ -98,4 +99,13 @@ func chunk(options []*Option, chunkSize int) [][]*Option {
 	}
 
 	return chunks
+}
+
+func Unmarshal(item map[string]types.AttributeValue) *Option {
+	option := &Option{}
+	if err := attributevalue.Unmarshal(item, option); err != nil {
+		panic(err)
+	}
+
+	return option
 }

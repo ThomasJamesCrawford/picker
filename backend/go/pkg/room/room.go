@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"picker/backend/go/pkg/dynamodbTypes"
 	"picker/backend/go/pkg/option"
@@ -28,9 +29,9 @@ type Room struct {
 	Type   string `dynamodbav:"type" json:"-"`
 
 	// Public
-	ID       string          `json:"id"`
-	Options  []option.Option `json:"options"`
-	Question string          `json:"question"`
+	ID       string           `json:"id"`
+	Options  []*option.Option `json:"options"`
+	Question string           `json:"question"`
 
 	// Private
 	OwnerID string `dynamodbav:"ownerID" json:"-"`
@@ -38,9 +39,9 @@ type Room struct {
 
 type PublicRoom struct {
 	// Public
-	ID       string   `json:"id"`
-	Options  []string `json:"options"`
-	Question string   `json:"question"`
+	ID       string           `json:"id"`
+	Options  []*option.Option `json:"options"`
+	Question string           `json:"question"`
 }
 
 func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
@@ -61,13 +62,21 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 	}, nil
 }
 
+func Unmarshal(item map[string]types.AttributeValue) *Room {
+	room := &Room{}
+	if err := attributevalue.Unmarshal(item, room); err != nil {
+		panic(err)
+	}
+
+	return room
+}
+
 func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client) (*Room, error) {
 	room := &Room{
 		PK:       fmt.Sprintf("ROOM#%s", request.ID),
 		SK:       fmt.Sprintf("ROOM#%s", request.ID),
 		Type:     dynamodbTypes.Room,
 		ID:       request.ID,
-		Options:  request.Options,
 		Question: request.Question,
 		OwnerID:  userID,
 		GSI1PK:   fmt.Sprintf("USER#%s", userID),
@@ -105,29 +114,40 @@ func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client)
 }
 
 func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
-	res, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String(os.Getenv("table")),
-		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
-			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
+	paginator := dynamodb.NewQueryPaginator(client, &dynamodb.QueryInput{
+		TableName:              aws.String(os.Getenv("table")),
+		KeyConditionExpression: aws.String("PK = :PK and begins_with(SK, :roomPrefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":PK":         &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", id)},
+			":roomPrefix": &types.AttributeValueMemberS{Value: "ROOM"},
 		},
 	})
 
-	if res.Item == nil {
-		return nil, nil
+	var room *Room
+	var options []*option.Option
+
+	for paginator.HasMorePages() {
+		out, err := paginator.NextPage(context.TODO())
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, item := range out.Items {
+			itemType := dynamodbTypes.GetType(item)
+
+			switch itemType {
+			case dynamodbTypes.Room:
+				room = Unmarshal(item)
+			case dynamodbTypes.Option:
+				options = append(options, option.Unmarshal(item))
+			default:
+				log.Default().Printf("%s missing", itemType)
+			}
+		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	room := &Room{}
-
-	unmarhsalError := attributevalue.UnmarshalMap(res.Item, &room)
-
-	if unmarhsalError != nil {
-		panic(unmarhsalError)
-	}
+	room.Options = options
 
 	return room, nil
 }
