@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"picker/backend/go/pkg/dynamodbTypes"
+	"picker/backend/go/pkg/option"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -14,24 +15,29 @@ import (
 
 type CreateRoomRequest struct {
 	ID       string   `json:"id" binding:"required,alphanum,min=1,max=100"`
-	Options  []string `json:"options" binding:"required,gt=0,dive,required,min=1,max=1000"`
+	Options  []string `json:"options" binding:"required,gt=0,lt=200,dive,required,min=1,max=1000"`
 	Question string   `json:"question" binding:"required,min=1,max=1500"`
 }
 
 type Room struct {
+	// DynamoDB
 	PK     string `dynamodbav:"PK" json:"-"`
 	SK     string `dynamodbav:"SK" json:"-"`
 	GSI1PK string `dynamodbav:"GSI1PK" json:"-"`
 	GSI1SK string `dynamodbav:"GSI1SK" json:"-"`
 	Type   string `dynamodbav:"type" json:"-"`
 
-	ID       string   `json:"id"`
-	Options  []string `json:"options"`
-	Question string   `json:"question"`
-	OwnerID  string   `json:"ownerID"`
+	// Public
+	ID       string          `json:"id"`
+	Options  []option.Option `json:"options"`
+	Question string          `json:"question"`
+
+	// Private
+	OwnerID string `dynamodbav:"ownerID" json:"-"`
 }
 
 type PublicRoom struct {
+	// Public
 	ID       string   `json:"id"`
 	Options  []string `json:"options"`
 	Question string   `json:"question"`
@@ -79,6 +85,17 @@ func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client)
 		Item:                marshalledRoom,
 		ConditionExpression: aws.String("attribute_not_exists(PK) and attribute_not_exists(SK)"),
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var options []*option.Option
+	for _, opt := range request.Options {
+		options = append(options, option.NewOption(opt, userID, request.ID, client))
+	}
+
+	err = option.BatchWriteOptions(options, client)
 
 	if err != nil {
 		return nil, err
