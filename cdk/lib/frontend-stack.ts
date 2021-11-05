@@ -6,6 +6,7 @@ import { HttpApi } from "@aws-cdk/aws-apigatewayv2";
 import { StringParameter } from "@aws-cdk/aws-ssm";
 import { PriceClass } from "@aws-cdk/aws-cloudfront";
 import { APP_NAME } from "./shared-parameters";
+import { BlockPublicAccess } from "@aws-cdk/aws-s3";
 
 interface FrontendStackProps extends cdk.StackProps {
   httpApi: HttpApi;
@@ -19,6 +20,8 @@ export class FrontendStack extends cdk.Stack {
     const svelteBucket = new s3.Bucket(this, "svelte-bucket", {
       websiteIndexDocument: "index.html",
       websiteErrorDocument: "index.html",
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
     });
 
     /**
@@ -31,6 +34,18 @@ export class FrontendStack extends cdk.Stack {
       this,
       "distribution",
       {
+        /**
+         * SPA routing will 404, needs to be handled client side
+         *
+         * API Gateway will get hit by this too
+         */
+        errorConfigurations: [
+          {
+            errorCode: 404,
+            responseCode: 200,
+            responsePagePath: "/index.html",
+          },
+        ],
         priceClass: PriceClass.PRICE_CLASS_ALL,
         originConfigs: [
           // Serve the S3 bucket
