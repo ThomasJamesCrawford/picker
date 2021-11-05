@@ -41,7 +41,7 @@
 						class:white={selectedOption === i}
 						on:click={() => (selectedOption = i)}
 						type="button"
-						class="btn btn-secondary btn-outline border-2"
+						class="btn btn-secondary btn-outline border-2 not-uppercase"
 					>
 						{option}
 					</button>
@@ -57,5 +57,9 @@
 <style lang="postcss">
 	.white {
 		@apply text-white;
+	}
+
+	.not-uppercase {
+		text-transform: none;
 	}
 </style>
