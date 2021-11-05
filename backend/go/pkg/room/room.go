@@ -124,7 +124,7 @@ func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 	})
 
 	var room *Room
-	var options []*option.Option
+	var options []*option.Option = []*option.Option{}
 
 	for paginator.HasMorePages() {
 		out, err := paginator.NextPage(context.TODO())
