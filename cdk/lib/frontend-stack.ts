@@ -18,6 +18,7 @@ export class FrontendStack extends cdk.Stack {
 
     const svelteBucket = new s3.Bucket(this, "svelte-bucket", {
       websiteIndexDocument: "index.html",
+      websiteErrorDocument: "index.html",
     });
 
     /**
