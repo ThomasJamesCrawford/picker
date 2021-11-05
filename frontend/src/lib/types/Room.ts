@@ -11,4 +11,5 @@ export interface Room extends PublicRoom {
 export interface Option {
 	id: string;
 	ownerID: string;
+	value: string;
 }

@@ -35,15 +35,15 @@
 				{room.question}
 			</div>
 			<div class="flex flex-col space-y-2">
-				{#each room.options as option, i}
+				{#each room.options as option}
 					<button
-						class:btn-active={selectedOption === i}
-						class:white={selectedOption === i}
-						on:click={() => (selectedOption = i)}
+						class:btn-active={selectedOption === option.id}
+						class:white={selectedOption === option.id}
+						on:click={() => (selectedOption = option.id)}
 						type="button"
 						class="btn btn-secondary btn-outline border-2 not-uppercase"
 					>
-						{option}
+						{option.value}
 					</button>
 				{/each}
 			</div>
