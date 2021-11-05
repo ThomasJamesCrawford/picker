@@ -1,8 +1,11 @@
+# Picker
+
+## Table of contents
 - [Picker](#picker)
+  - [Table of contents](#table-of-contents)
   - [Single Table Schema](#single-table-schema)
   - [Architecture](#architecture)
 
-# Picker
 
 ## Single Table Schema
 | Entity | PK        | SK               | GSI1PK    | GSI1SK           | type   |
