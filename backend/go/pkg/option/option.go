@@ -105,7 +105,7 @@ func chunk(options []*Option, chunkSize int) [][]*Option {
 
 func Unmarshal(item map[string]types.AttributeValue) *Option {
 	option := &Option{}
-	if err := attributevalue.Unmarshal(item, option); err != nil {
+	if err := attributevalue.UnmarshalMap(item, option); err != nil {
 		panic(err)
 	}
 

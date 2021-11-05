@@ -64,7 +64,7 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 
 func Unmarshal(item map[string]types.AttributeValue) *Room {
 	room := &Room{}
-	if err := attributevalue.Unmarshal(item, room); err != nil {
+	if err := attributevalue.UnmarshalMap(item, room); err != nil {
 		panic(err)
 	}
 
