@@ -147,6 +147,10 @@ func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 		}
 	}
 
+	if room == nil {
+		return nil, nil
+	}
+
 	room.Options = options
 
 	return room, nil
