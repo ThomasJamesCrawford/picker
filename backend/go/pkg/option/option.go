@@ -23,6 +23,7 @@ type Option struct {
 	// Public
 	ID     string `json:"id"`
 	RoomID string `json:"roomID"`
+	Value  string `json:"value"`
 
 	// Private
 	SelectedByID *string `dynamodbav:"selectedByID,omitEmpty" json:"-"`
@@ -41,6 +42,7 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 
 		ID:     optionID,
 		RoomID: roomID,
+		Value:  option,
 
 		SelectedByID: nil,
 	}
