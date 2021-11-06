@@ -56,6 +56,31 @@ func SelectOption(optionID string, userID string, roomID string, client *dynamod
 	return updatedOption, nil
 }
 
+func UnselectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
+	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("table")),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM_OPTION#%s", optionID)},
+		},
+		UpdateExpression: aws.String("set selectedByID = :null"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userID": &types.AttributeValueMemberS{Value: userID},
+			":null":   &types.AttributeValueMemberNULL{Value: true},
+		},
+		ConditionExpression: aws.String("selectedByID = :userID and attribute_exists(PK) and attribute_exists(SK)"),
+		ReturnValues:        types.ReturnValueAllNew,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedOption := Unmarshal(res.Attributes, userID)
+
+	return updatedOption, nil
+}
+
 func NewOption(option string, userID string, roomID string, client *dynamodb.Client) *Option {
 	optionID := uuid.NewV4().String()
 

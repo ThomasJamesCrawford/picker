@@ -130,6 +130,20 @@ func init() {
 		c.JSON(http.StatusOK, res)
 	})
 
+	api.PATCH("/room/:roomID/option/:optionID/unselect", func(c *gin.Context) {
+		roomID := c.Param("roomID")
+		optionID := c.Param("optionID")
+
+		res, err := option.UnselectOption(optionID, getUserID(c), roomID, client)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+	})
+
 	ginLambda = ginadapter.NewV2(r)
 }
 
