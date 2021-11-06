@@ -13,16 +13,16 @@
 ## Single Table Schema
 
 ### Entities
-| Entity | PK        | SK               | GSI1PK    | GSI1SK    | type   |
-| ------ | --------- | ---------------- | --------- | --------- | ------ |
-| Room   | ROOM#NAME | ROOM#NAME        | USER#UUID | ROOM#NAME | room   |
-| Option | ROOM#NAME | ROOM_OPTION#UUID |           |           | option |
+| Entity | PK        | SK               | GSI1PK    | GSI1SK       | type   |
+| ------ | --------- | ---------------- | --------- | ------------ | ------ |
+| Room   | ROOM#NAME | ROOM#NAME        | USER#UUID | ROOM#RFC3339 | room   |
+| Option | ROOM#NAME | ROOM_OPTION#UUID |           |              | option |
 
 ### Access Patterns
-| Access Pattern                            | Query                                    |
-| ----------------------------------------- | ---------------------------------------- |
-| Get room by name with all options         | PK = ROOM#NAME, begins_with(SK, 'ROOM')  |
-| Get all rooms owned by the (current) user | PK = USER#UUID, begins_with(SK, 'ROOM#') |
+| Access Pattern                                                     | Query                                            |
+| ------------------------------------------------------------------ | ------------------------------------------------ |
+| Get room by name with all options                                  | PK = ROOM#NAME, begins_with(SK, 'ROOM')          |
+| Get all rooms owned by the (current) user ordered by creation date | GSI1PK = USER#UUID, begins_with(GSI1SK, 'ROOM#') |
 
 ## Architecture
 <img src="./architecture.svg">

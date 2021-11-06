@@ -7,6 +7,7 @@ import (
 	"os"
 	"picker/backend/go/pkg/dynamodbTypes"
 	"picker/backend/go/pkg/option"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -34,7 +35,8 @@ type Room struct {
 	Question string           `json:"question"`
 
 	// Private
-	OwnerID string `dynamodbav:"ownerID" json:"-"`
+	OwnerID   string    `dynamodbav:"ownerID" json:"-"`
+	CreatedAt time.Time `dynamodbav:"createdAt" json:"-"`
 }
 
 type PublicRoom struct {
@@ -74,15 +76,18 @@ func Unmarshal(item map[string]types.AttributeValue) *Room {
 }
 
 func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client) (*Room, error) {
+	createdAt := time.Now().UTC()
+
 	room := &Room{
-		PK:       fmt.Sprintf("ROOM#%s", request.ID),
-		SK:       fmt.Sprintf("ROOM#%s", request.ID),
-		Type:     dynamodbTypes.Room,
-		ID:       request.ID,
-		Question: request.Question,
-		OwnerID:  userID,
-		GSI1PK:   fmt.Sprintf("USER#%s", userID),
-		GSI1SK:   fmt.Sprintf("ROOM#%s", request.ID),
+		PK:        fmt.Sprintf("ROOM#%s", request.ID),
+		SK:        fmt.Sprintf("ROOM#%s", request.ID),
+		Type:      dynamodbTypes.Room,
+		ID:        request.ID,
+		Question:  request.Question,
+		OwnerID:   userID,
+		CreatedAt: createdAt,
+		GSI1PK:    fmt.Sprintf("USER#%s", userID),
+		GSI1SK:    fmt.Sprintf("ROOM#%s", createdAt.Format(time.RFC3339)),
 	}
 
 	marshalledRoom, marshallErr := attributevalue.MarshalMap(room)
@@ -156,4 +161,34 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 	room.Options = options
 
 	return room, nil
+}
+
+func RoomsForUser(userID string, client *dynamodb.Client) ([]*Room, error) {
+	paginator := dynamodb.NewQueryPaginator(client, &dynamodb.QueryInput{
+		TableName: aws.String(os.Getenv("table")),
+		IndexName: aws.String("GSI1"),
+		// Get the most recent first
+		ScanIndexForward:       aws.Bool(false),
+		KeyConditionExpression: aws.String("GSI1PK = :GSI1PK and begins_with(GSI1SK, :room)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":GSI1PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", userID)},
+			":room":   &types.AttributeValueMemberS{Value: "ROOM#"},
+		},
+	})
+
+	var rooms []*Room = []*Room{}
+
+	for paginator.HasMorePages() {
+		out, err := paginator.NextPage(context.TODO())
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, item := range out.Items {
+			rooms = append(rooms, Unmarshal(item))
+		}
+	}
+
+	return rooms, nil
 }
