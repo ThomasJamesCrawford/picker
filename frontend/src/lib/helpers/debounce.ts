@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * https://gist.github.com/ca0v/73a31f57b397606c9813472f7493a940#gistcomment-3728415
  */
-export const debounce = <T extends (...args: unknown[]) => unknown>(
+export const debounce = <T extends (...args: any[]) => any>(
 	ms: number,
 	callback: T
 ): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
