@@ -7,6 +7,7 @@ import (
 	"os"
 	"picker/backend/go/pkg/environment"
 	"picker/backend/go/pkg/middleware"
+	"picker/backend/go/pkg/option"
 	"picker/backend/go/pkg/room"
 	"strings"
 
@@ -113,6 +114,20 @@ func init() {
 		}
 
 		c.JSON(http.StatusOK, room)
+	})
+
+	api.PATCH("/room/:roomID/option/:optionID/select", func(c *gin.Context) {
+		roomID := c.Param("roomID")
+		optionID := c.Param("optionID")
+
+		res, err := option.SelectOption(optionID, getUserID(c), roomID, client)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
 	})
 
 	ginLambda = ginadapter.NewV2(r)

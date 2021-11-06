@@ -7,6 +7,7 @@ import (
 	"picker/backend/go/pkg/dynamodbTypes"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -20,12 +21,39 @@ type Option struct {
 	Type string `dynamodbav:"type" json:"-"`
 
 	// Public
-	ID     string `json:"id"`
-	RoomID string `json:"roomID"`
-	Value  string `json:"value"`
+	ID           string `json:"id"`
+	RoomID       string `json:"roomID"`
+	Value        string `json:"value"`
+	Available    bool   `dynamodbav:"-" json:"available"`
+	SelectedByMe bool   `dynamodbav:"-" json:"selectedByMe"`
 
 	// Private
 	SelectedByID *string `dynamodbav:"selectedByID,omitEmpty" json:"-"`
+}
+
+func SelectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
+	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("table")),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM_OPTION#%s", optionID)},
+		},
+		UpdateExpression: aws.String("set selectedByID = :userID"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userID": &types.AttributeValueMemberS{Value: userID},
+			":null":   &types.AttributeValueMemberNULL{Value: true},
+		},
+		ConditionExpression: aws.String("(attribute_not_exists(selectedByID) or selectedByID = :null) and attribute_exists(PK) and attribute_exists(SK)"),
+		ReturnValues:        types.ReturnValueAllNew,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedOption := Unmarshal(res.Attributes, userID)
+
+	return updatedOption, nil
 }
 
 func NewOption(option string, userID string, roomID string, client *dynamodb.Client) *Option {
@@ -112,10 +140,16 @@ func chunk(options []*Option, chunkSize int) [][]*Option {
 	return chunks
 }
 
-func Unmarshal(item map[string]types.AttributeValue) *Option {
+func Unmarshal(item map[string]types.AttributeValue, userID string) *Option {
 	option := &Option{}
 	if err := attributevalue.UnmarshalMap(item, option); err != nil {
 		panic(err)
+	}
+
+	option.Available = option.SelectedByID == nil
+
+	if option.SelectedByID != nil {
+		option.SelectedByMe = *option.SelectedByID == userID
 	}
 
 	return option

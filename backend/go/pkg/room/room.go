@@ -46,7 +46,7 @@ type PublicRoom struct {
 }
 
 func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRoom, error) {
-	room, err := GetRoom(id, client)
+	room, err := GetRoom(id, client, userID)
 
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client)
 	return room, nil
 }
 
-func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
+func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 	paginator := dynamodb.NewQueryPaginator(client, &dynamodb.QueryInput{
 		TableName:              aws.String(os.Getenv("table")),
 		KeyConditionExpression: aws.String("PK = :PK and begins_with(SK, :roomPrefix)"),
@@ -142,7 +142,7 @@ func GetRoom(id string, client *dynamodb.Client) (*Room, error) {
 			case dynamodbTypes.Room:
 				room = Unmarshal(item)
 			case dynamodbTypes.Option:
-				options = append(options, option.Unmarshal(item))
+				options = append(options, option.Unmarshal(item, userID))
 			default:
 				log.Default().Printf("%s missing", itemType)
 			}
