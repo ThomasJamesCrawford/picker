@@ -39,12 +39,13 @@ type Room struct {
 
 type PublicRoom struct {
 	// Public
-	ID       string           `json:"id"`
-	Options  []*option.Option `json:"options"`
-	Question string           `json:"question"`
+	ID        string           `json:"id"`
+	Options   []*option.Option `json:"options"`
+	Question  string           `json:"question"`
+	OwnedByMe bool             `json:"ownedByMe"`
 }
 
-func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
+func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRoom, error) {
 	room, err := GetRoom(id, client)
 
 	if err != nil {
@@ -56,9 +57,10 @@ func GetPublicRoom(id string, client *dynamodb.Client) (*PublicRoom, error) {
 	}
 
 	return &PublicRoom{
-		ID:       room.ID,
-		Options:  room.Options,
-		Question: room.Question,
+		ID:        room.ID,
+		Options:   room.Options,
+		Question:  room.Question,
+		OwnedByMe: room.OwnerID == userID,
 	}, nil
 }
 

@@ -64,7 +64,7 @@ func init() {
 
 	api.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		res, err := room.GetPublicRoom(id, client)
+		res, err := room.GetPublicRoom(id, client, getUserID(c))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -80,7 +80,7 @@ func init() {
 
 	api.GET("/publicRoom/:id/available", func(c *gin.Context) {
 		id := c.Param("id")
-		res, err := room.GetPublicRoom(id, client)
+		res, err := room.GetPublicRoom(id, client, getUserID(c))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -105,9 +105,7 @@ func init() {
 			return
 		}
 
-		userID := fmt.Sprintf("%v", sessions.Default(c).Get("user_id"))
-
-		room, err := room.NewRoom(createRoomRequest, userID, client)
+		room, err := room.NewRoom(createRoomRequest, getUserID(c), client)
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
@@ -118,6 +116,10 @@ func init() {
 	})
 
 	ginLambda = ginadapter.NewV2(r)
+}
+
+func getUserID(c *gin.Context) string {
+	return fmt.Sprintf("%v", sessions.Default(c).Get("user_id"))
 }
 
 func main() {
