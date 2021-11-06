@@ -5,8 +5,10 @@ export interface PublicRoom {
 	ownedByMe: boolean;
 }
 
-export interface Room extends PublicRoom {
-	ownerID: string;
+export interface Room {
+	id: string;
+	options: Option[];
+	question: string;
 }
 
 export interface Option {

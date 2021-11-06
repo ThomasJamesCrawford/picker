@@ -77,7 +77,7 @@
 			},
 			body: JSON.stringify({ id: shortLink, options, question })
 		})
-			.then(() => goto(`/${shortLink}`))
+			.then(() => goto(`/admin/${shortLink}`))
 			.catch(() => (error = 'Something went wrong, try refreshing the page.'))
 			.finally(() => {
 				submitLoading = false;
@@ -88,7 +88,7 @@
 <div class="container mx-auto max-w-xl">
 	<form class="p-4" on:submit|preventDefault={submit}>
 		<div class="form-control my-2">
-			<label for="username" class="label justify-start space-x-2">
+			<label for="short_link" class="label justify-start space-x-2">
 				<span class="label-text">Short link</span>
 				<span
 					data-tip="This is the url where your {APP_NAME} will live"
@@ -139,10 +139,11 @@
 		</div>
 
 		<div class="form-control my-2">
-			<label for="username" class="label">
+			<label for="question" class="label">
 				<span class="label-text">Question</span>
 			</label>
 			<textarea
+				id="question"
 				bind:value={question}
 				required
 				aria-required
@@ -152,7 +153,7 @@
 		</div>
 
 		<div class="form-control my-2">
-			<label for="fef" class="label justify-start space-x-2">
+			<label for="option" class="label justify-start space-x-2">
 				<span class="label-text">Add some options</span>
 				<span
 					data-tip="Options to choose from"
@@ -177,6 +178,7 @@
 			{/if}
 			<div class="flex space-x-2">
 				<input
+					id="option"
 					on:keydown={(e) => {
 						if (e.key === 'Enter') {
 							addOption();

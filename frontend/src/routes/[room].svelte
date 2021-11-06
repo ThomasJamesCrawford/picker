@@ -170,7 +170,7 @@
 			{/if}
 			{#if hasSelectedOptionAlready}
 				<div class="alert alert-info mt-4 justify-center">
-					You have selected {hasSelectedOptionAlready.value}.
+					You have selected {hasSelectedOptionAlready.value}
 				</div>
 			{/if}
 		</div>
