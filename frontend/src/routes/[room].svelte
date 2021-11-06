@@ -55,7 +55,9 @@
 				if (updatedOption) {
 					room = {
 						...room,
-						options: [...nonUpdatedOptions, { ...updatedOption, selectedByMe: true }]
+						options: [...nonUpdatedOptions, { ...updatedOption, selectedByMe: true }].sort((a, b) =>
+							a.value.localeCompare(b.value)
+						)
 					};
 				}
 			})
@@ -78,13 +80,14 @@
 				{room.question}
 			</div>
 			<div class="flex flex-col space-y-2">
-				{#each room.options as option}
+				{#each room.options.sort((a, b) => a.value.localeCompare(b.value)) as option}
 					<button
 						class:btn-disabled={!option.available || !!hasSelectedOptionAlready}
 						disabled={!option.available || !!hasSelectedOptionAlready}
 						aria-disabled={!option.available || !!hasSelectedOptionAlready}
-						class:btn-active={selectedOption === option.id}
-						class:white={selectedOption === option.id}
+						class:btn-active={selectedOption === option.id ||
+							hasSelectedOptionAlready?.id === option.id}
+						class:white={selectedOption === option.id || hasSelectedOptionAlready?.id === option.id}
 						on:click={() => (selectedOption = option.id)}
 						type="button"
 						class="btn btn-secondary btn-outline border-2 not-uppercase"
@@ -93,7 +96,7 @@
 					</button>
 				{/each}
 			</div>
-			<div class="flex justify-end mt-4 space-y-4">
+			<div class="flex justify-end mt-4">
 				<button
 					class="btn btn-primary"
 					class:btn-loading={loading}
@@ -103,10 +106,10 @@
 				>
 			</div>
 			{#if error}
-				<div class="alert alert-warning">{error}</div>
+				<div class="alert alert-warning mt-4">{error}</div>
 			{/if}
 			{#if hasSelectedOptionAlready}
-				<div class="alert alert-info">You have selected {hasSelectedOptionAlready.value}</div>
+				<div class="alert alert-info mt-4">You have selected {hasSelectedOptionAlready.value}</div>
 			{/if}
 		</div>
 	</form>
