@@ -29,6 +29,7 @@ type Option struct {
 
 	// Private
 	SelectedByID *string `dynamodbav:"selectedByID,omitEmpty" json:"-"`
+	OwnedByID    string  `dynamodbav:"ownedByID" json:"-"`
 }
 
 func SelectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
@@ -81,6 +82,29 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 	return updatedOption, nil
 }
 
+func Delete(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
+	res, err := client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+		TableName: aws.String(os.Getenv("table")),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM_OPTION#%s", optionID)},
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userID": &types.AttributeValueMemberS{Value: userID},
+		},
+		ConditionExpression: aws.String("ownedByID = :userID"),
+		ReturnValues:        types.ReturnValueAllOld,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedOption := Unmarshal(res.Attributes, userID)
+
+	return updatedOption, nil
+}
+
 func NewOption(option string, userID string, roomID string, client *dynamodb.Client) *Option {
 	optionID := uuid.NewV4().String()
 
@@ -95,6 +119,7 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 		Value:  option,
 
 		SelectedByID: nil,
+		OwnedByID:    userID,
 	}
 }
 

@@ -165,6 +165,20 @@ func init() {
 		c.JSON(http.StatusOK, res)
 	})
 
+	api.DELETE("/room/:roomID/option/:optionID", func(c *gin.Context) {
+		roomID := c.Param("roomID")
+		optionID := c.Param("optionID")
+
+		res, err := option.Delete(optionID, getUserID(c), roomID, client)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+	})
+
 	ginLambda = ginadapter.NewV2(r)
 }
 
