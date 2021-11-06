@@ -11,6 +11,11 @@ export interface Room {
 	question: string;
 }
 
+export interface SimpleRoom {
+	id: string;
+	question: string;
+}
+
 export interface Option {
 	id: string;
 	value: string;
