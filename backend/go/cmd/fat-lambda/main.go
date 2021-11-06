@@ -84,6 +84,21 @@ func init() {
 		c.JSON(http.StatusOK, res)
 	})
 
+	api.GET("/room", func(c *gin.Context) {
+		res, err := room.RoomsForUser(getUserID(c), client)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+		}
+
+		if res == nil {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+	})
+
 	api.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client, getUserID(c))
