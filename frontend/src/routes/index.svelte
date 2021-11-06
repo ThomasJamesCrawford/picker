@@ -78,7 +78,7 @@
 			body: JSON.stringify({ id: shortLink, options, question })
 		})
 			.then(() => goto(`/${shortLink}`))
-			.catch(() => (error = 'Something went wrong..'))
+			.catch(() => (error = 'Something went wrong, try refreshing the page.'))
 			.finally(() => {
 				submitLoading = false;
 			});

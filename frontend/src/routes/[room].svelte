@@ -21,6 +21,8 @@
 </script>
 
 <script lang="ts">
+	import Cross from '$lib/icons/cross.svelte';
+
 	import type { PublicRoom, Option } from '$lib/types/Room';
 
 	export let room: PublicRoom;
@@ -29,6 +31,7 @@
 
 	let error = '';
 	let loading = false;
+	let unselectLoading = false;
 
 	$: hasSelectedOptionAlready = room.options.find((opt) => opt.selectedByMe === true);
 
@@ -55,9 +58,10 @@
 				if (updatedOption) {
 					room = {
 						...room,
-						options: [...nonUpdatedOptions, { ...updatedOption, selectedByMe: true }].sort((a, b) =>
-							a.value.localeCompare(b.value)
-						)
+						options: [
+							...nonUpdatedOptions,
+							{ ...updatedOption, selectedByMe: true, available: false }
+						].sort((a, b) => a.value.localeCompare(b.value))
 					};
 				}
 			})
@@ -66,6 +70,39 @@
 			})
 			.finally(() => {
 				loading = false;
+			});
+	};
+
+	const unselectOption = async (optionID: string, roomID: string) => {
+		unselectLoading = true;
+		error = '';
+
+		await fetch(`${import.meta.env.VITE_API_URL}/room/${roomID}/option/${optionID}/unselect`, {
+			method: 'PATCH',
+			headers: {
+				accepts: 'application/json'
+			}
+		})
+			.then((res) => res.json())
+			.then((res: Option) => {
+				const updatedOption = room.options.find(({ id }) => id === res.id);
+				const nonUpdatedOptions = room.options.filter(({ id }) => id !== res.id);
+
+				if (updatedOption) {
+					room = {
+						...room,
+						options: [
+							...nonUpdatedOptions,
+							{ ...updatedOption, selectedByMe: false, available: true }
+						].sort((a, b) => a.value.localeCompare(b.value))
+					};
+				}
+			})
+			.catch(() => {
+				error = 'Something went wrong, try refreshing the page.';
+			})
+			.finally(() => {
+				unselectLoading = false;
 			});
 	};
 </script>
@@ -81,25 +118,45 @@
 			</div>
 			<div class="flex flex-col space-y-2">
 				{#each room.options.sort((a, b) => a.value.localeCompare(b.value)) as option}
-					<button
-						class:btn-disabled={!option.available || !!hasSelectedOptionAlready}
-						disabled={!option.available || !!hasSelectedOptionAlready}
-						aria-disabled={!option.available || !!hasSelectedOptionAlready}
-						class:btn-active={selectedOption === option.id ||
-							hasSelectedOptionAlready?.id === option.id}
-						class:white={selectedOption === option.id || hasSelectedOptionAlready?.id === option.id}
-						on:click={() => (selectedOption = option.id)}
-						type="button"
-						class="btn btn-secondary btn-outline border-2 not-uppercase"
-					>
-						{option.value}
-					</button>
+					{#if !option.available || !!hasSelectedOptionAlready}
+						<div class="flex space-x-2">
+							{#if hasSelectedOptionAlready?.id === option.id}
+								<div class="bg-secondary p-3 rounded-xl w-full">
+									{option.value}
+								</div>
+								<button
+									class:loading={unselectLoading}
+									on:click={() => unselectOption(option.id, room.id)}
+									type="button"
+									class="btn btn-accent btn-circle"
+								>
+									{#if !unselectLoading}
+										<Cross />
+									{/if}
+								</button>
+							{:else}
+								<div class="bg-gray-200 p-3 rounded-xl w-full">
+									{option.value}
+								</div>
+							{/if}
+						</div>
+					{:else}
+						<button
+							on:click={() => (selectedOption = option.id)}
+							type="button"
+							class:btn-active={selectedOption === option.id}
+							class:white={selectedOption === option.id}
+							class="btn btn-block btn-secondary btn-outline border-2 not-uppercase"
+						>
+							{option.value}
+						</button>
+					{/if}
 				{/each}
 			</div>
 			<div class="flex justify-end mt-4">
 				<button
 					class="btn btn-primary"
-					class:btn-loading={loading}
+					class:loading
 					class:btn-disabled={hasSelectedOptionAlready}
 					disabled={!!hasSelectedOptionAlready}
 					aria-disabled={!!hasSelectedOptionAlready}>Save</button
@@ -108,8 +165,13 @@
 			{#if error}
 				<div class="alert alert-warning mt-4">{error}</div>
 			{/if}
+			{#if !hasSelectedOptionAlready && room.options.filter((opt) => opt.available).length === 0}
+				<div class="alert alert-warning mt-4">All the options have already been selected.</div>
+			{/if}
 			{#if hasSelectedOptionAlready}
-				<div class="alert alert-info mt-4">You have selected {hasSelectedOptionAlready.value}</div>
+				<div class="alert alert-info mt-4 justify-center">
+					You have selected {hasSelectedOptionAlready.value}.
+				</div>
 			{/if}
 		</div>
 	</form>
