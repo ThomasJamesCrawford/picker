@@ -121,7 +121,7 @@
 					{#if !option.available || !!hasSelectedOptionAlready}
 						<div class="flex space-x-2">
 							{#if hasSelectedOptionAlready?.id === option.id}
-								<div class="bg-secondary p-3 rounded-xl w-full">
+								<div class="bg-secondary text-secondary-content p-3 rounded-xl w-full">
 									{option.value}
 								</div>
 								<button

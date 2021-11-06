@@ -30,22 +30,24 @@
 	<div class="card bg-white shadow-lg">
 		<div class="card-body">
 			<div class="card-title">Rooms</div>
-			<table class="table w-full">
-				<thead>
-					<tr>
-						<th>name</th>
-						<th>question</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each rooms as room}
-						<tr class="hover">
-							<td>{room.id}</td>
-							<td>{room.question}</td>
+			<div>
+				<table class="table w-full table-fixed">
+					<thead>
+						<tr>
+							<th>name</th>
+							<th>question</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each rooms as room}
+							<tr>
+								<td><a class="link link-secondary" href={`/admin/${room.id}`}>{room.id}</a></td>
+								<td class="overflow-ellipsis overflow-hidden">{room.question}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</div>
 </div>
