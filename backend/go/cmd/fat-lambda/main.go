@@ -63,12 +63,33 @@ func init() {
 
 	api := r.Group("/api")
 
+	api.GET("/room/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		res, err := room.GetRoom(id, client, getUserID(c))
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+		}
+
+		if res == nil {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		if res.OwnerID != getUserID(c) {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+	})
+
 	api.GET("/publicRoom/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := room.GetPublicRoom(id, client, getUserID(c))
 
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.AbortWithError(http.StatusBadRequest, err)
 		}
 
 		if res == nil {
@@ -84,7 +105,7 @@ func init() {
 		res, err := room.GetPublicRoom(id, client, getUserID(c))
 
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
