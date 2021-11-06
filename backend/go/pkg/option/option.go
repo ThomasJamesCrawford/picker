@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"picker/backend/go/pkg/dynamodbTypes"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -44,40 +45,52 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 	}
 }
 
-func BatchWriteOptions(options []*Option, client *dynamodb.Client) error {
-	// BatchWriteItem does max 25
-	chunkedOptions := chunk(options, 25)
+func BatchWriteOptionChunk(chunk []*Option, client *dynamodb.Client, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-	// TODO loop could be async
-	for _, chunk := range chunkedOptions {
-		var items []types.WriteRequest
+	var items []types.WriteRequest
 
-		for _, option := range chunk {
-			item, err := attributevalue.MarshalMap(option)
-
-			if err != nil {
-				panic(err)
-			}
-
-			items = append(items, types.WriteRequest{
-				PutRequest: &types.PutRequest{
-					Item: item,
-				},
-			})
-		}
-
-		request := &dynamodb.BatchWriteItemInput{
-			RequestItems: map[string][]types.WriteRequest{
-				os.Getenv("table"): items,
-			},
-		}
-
-		_, err := client.BatchWriteItem(context.TODO(), request)
+	for _, option := range chunk {
+		item, err := attributevalue.MarshalMap(option)
 
 		if err != nil {
-			return err
+			panic(err)
 		}
+
+		items = append(items, types.WriteRequest{
+			PutRequest: &types.PutRequest{
+				Item: item,
+			},
+		})
 	}
+
+	request := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			os.Getenv("table"): items,
+		},
+	}
+
+	_, err := client.BatchWriteItem(context.TODO(), request)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func BatchWriteOptions(options []*Option, client *dynamodb.Client) error {
+	// BatchWriteItem does a max of 25 items
+	chunkedOptions := chunk(options, 25)
+
+	var wg sync.WaitGroup
+
+	for _, chunk := range chunkedOptions {
+		wg.Add(1)
+
+		// Process each chunk async
+		go BatchWriteOptionChunk(chunk, client, &wg)
+	}
+
+	wg.Wait()
 
 	return nil
 }
