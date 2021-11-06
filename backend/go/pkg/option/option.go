@@ -14,11 +14,9 @@ import (
 
 type Option struct {
 	// DynamoDB
-	PK     string `dynamodbav:"PK" json:"-"`
-	SK     string `dynamodbav:"SK" json:"-"`
-	GSI1PK string `dynamodbav:"GSI1PK" json:"-"`
-	GSI1SK string `dynamodbav:"GSI1SK" json:"-"`
-	Type   string `dynamodbav:"type" json:"-"`
+	PK   string `dynamodbav:"PK" json:"-"`
+	SK   string `dynamodbav:"SK" json:"-"`
+	Type string `dynamodbav:"type" json:"-"`
 
 	// Public
 	ID     string `json:"id"`
@@ -35,10 +33,8 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 	return &Option{
 		PK: fmt.Sprintf("ROOM#%s", roomID),
 		// This lets us use a BEGINS_WITH in our single table to pull in a room and all the options with one query
-		SK:     fmt.Sprintf("ROOM_OPTION#%s", optionID),
-		GSI1PK: fmt.Sprintf("USER#%s", userID),
-		GSI1SK: fmt.Sprintf("ROOM_OPTION#%s", optionID),
-		Type:   dynamodbTypes.Option,
+		SK:   fmt.Sprintf("ROOM_OPTION#%s", optionID),
+		Type: dynamodbTypes.Option,
 
 		ID:     optionID,
 		RoomID: roomID,
