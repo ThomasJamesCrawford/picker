@@ -172,7 +172,7 @@ func init() {
 		res, err := option.Delete(optionID, getUserID(c), roomID, client)
 
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
+			c.AbortWithError(http.StatusForbidden, err)
 			return
 		}
 
