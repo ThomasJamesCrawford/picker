@@ -8,4 +8,6 @@
 	<title>{APP_NAME}</title>
 </svelte:head>
 
-<slot />
+<div class="bg-gray-50">
+	<slot />
+</div>

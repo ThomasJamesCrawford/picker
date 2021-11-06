@@ -110,7 +110,7 @@
 <div class="container mx-auto max-w-lg py-4">
 	<form
 		on:submit|preventDefault={() => submitOption(selectedOption, room.id)}
-		class="card shadow-lg"
+		class="card bg-white shadow-lg"
 	>
 		<div class="card-body">
 			<div class="card-title">

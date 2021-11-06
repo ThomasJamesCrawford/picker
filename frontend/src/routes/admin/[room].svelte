@@ -33,7 +33,7 @@
 </script>
 
 <div class="container mx-auto max-w-lg py-4">
-	<div class="card shadow-lg">
+	<div class="card bg-white shadow-lg">
 		<div class="card-body">
 			<div class="card-title">
 				{room.id}

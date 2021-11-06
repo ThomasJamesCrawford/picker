@@ -86,8 +86,9 @@
 </script>
 
 <div class="container mx-auto max-w-xl py-4">
-	<form class="card shadow-lg" on:submit|preventDefault={submit}>
+	<form class="card bg-white shadow-lg" on:submit|preventDefault={submit}>
 		<div class="card-body">
+			<div class="card-title">Create a new room</div>
 			<div class="form-control">
 				<label for="short_link" class="label justify-start space-x-2">
 					<span class="label-text">Short link</span>
