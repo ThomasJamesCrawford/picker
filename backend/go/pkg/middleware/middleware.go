@@ -23,8 +23,13 @@ func UserId() gin.HandlerFunc {
 
 		if userID == nil {
 			session.Set("user_id", uuid.NewV4().String())
+		} else {
+			// Keep refreshing the cookie
+			session.Set("user_id", userID)
 		}
 
-		log.Default().Printf("UserID %s accessing %s", session.Get("user_id"), c.Request.URL)
+		session.Save()
+
+		log.Default().Printf("UserID %s accessing %s", userID, c.Request.URL)
 	}
 }
