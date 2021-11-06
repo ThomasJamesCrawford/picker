@@ -9,6 +9,6 @@ module.exports = {
     "@storybook/addon-svelte-csf"
   ],
   "svelteOptions": {
-    "preprocess": require("../svelte.config.js").preprocess
+    "preprocess": import("../svelte.config.js").preprocess
   }
 }
