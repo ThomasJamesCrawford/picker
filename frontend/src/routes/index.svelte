@@ -200,6 +200,7 @@
 				disabled={options.length <= 0 || !shortLinkValidated}
 				aria-disabled={options.length <= 0 || !shortLinkValidated}
 				class="btn btn-primary"
+				class:btn-disabled={options.length <= 0 || !shortLinkValidated}
 				class:loading={submitLoading}>Create {APP_NAME}</button
 			>
 		</div>
