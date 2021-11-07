@@ -23,7 +23,7 @@
 <script lang="ts">
 	import Cross from '$lib/icons/cross.svelte';
 
-	import type { PublicRoom, Option } from '$lib/types/Room';
+	import type { PublicRoom, PublicOption } from '$lib/types/Room';
 
 	export let room: PublicRoom;
 
@@ -35,7 +35,20 @@
 	let loading = false;
 	let unselectLoading = false;
 
-	$: hasSelectedOptionAlready = room.options.find((opt) => opt.selectedByMe === true);
+	$: hasSelectedOptionAlready = room.options.find((opt) => opt.selectedByMeAs !== undefined);
+
+	$: if (hasSelectedOptionAlready) {
+		name = hasSelectedOptionAlready.selectedByMeAs || name;
+	}
+
+	const sortOptions = (options: PublicOption[]) =>
+		options.sort((a, b) => {
+			if (a.value === b.value) {
+				return a.id.localeCompare(b.id);
+			}
+
+			return a.value.localeCompare(b.value);
+		});
 
 	const submitOption = async (optionID: string | undefined, roomID: string, name: string) => {
 		if (optionID === undefined) {
@@ -54,17 +67,14 @@
 			body: JSON.stringify({ name })
 		})
 			.then((res) => res.json())
-			.then((res: Option) => {
+			.then((res: PublicOption) => {
 				const updatedOption = room.options.find(({ id }) => id === res.id);
 				const nonUpdatedOptions = room.options.filter(({ id }) => id !== res.id);
 
 				if (updatedOption) {
 					room = {
 						...room,
-						options: [
-							...nonUpdatedOptions,
-							{ ...updatedOption, selectedByMe: true, available: false }
-						].sort((a, b) => a.value.localeCompare(b.value))
+						options: sortOptions([...nonUpdatedOptions, res])
 					};
 				}
 			})
@@ -88,17 +98,14 @@
 			}
 		})
 			.then((res) => res.json())
-			.then((res: Option) => {
+			.then((res: PublicOption) => {
 				const updatedOption = room.options.find(({ id }) => id === res.id);
 				const nonUpdatedOptions = room.options.filter(({ id }) => id !== res.id);
 
 				if (updatedOption) {
 					room = {
 						...room,
-						options: [
-							...nonUpdatedOptions,
-							{ ...updatedOption, selectedByMe: false, available: true }
-						].sort((a, b) => a.value.localeCompare(b.value))
+						options: sortOptions([...nonUpdatedOptions, res])
 					};
 				}
 			})
@@ -122,7 +129,7 @@
 				{room.question}
 			</div>
 			<div class="flex flex-col space-y-2">
-				{#each room.options.sort((a, b) => a.value.localeCompare(b.value)) as option}
+				{#each sortOptions(room.options) as option}
 					{#if !option.available || !!hasSelectedOptionAlready}
 						<div class="flex space-x-2">
 							{#if hasSelectedOptionAlready?.id === option.id}
