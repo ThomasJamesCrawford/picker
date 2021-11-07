@@ -219,7 +219,7 @@ func Update(userID string, roomID string, request UpdateRoomRequest, client *dyn
 			":userID":   &types.AttributeValueMemberS{Value: userID},
 			":question": &types.AttributeValueMemberS{Value: request.Question},
 		},
-		ConditionExpression: aws.String("ownedByID = :userID and attribute_exists(PK) and attribute_exists(SK)"),
+		ConditionExpression: aws.String("ownerID = :userID and attribute_exists(PK) and attribute_exists(SK)"),
 		ReturnValues:        types.ReturnValueAllNew,
 	})
 
