@@ -65,7 +65,7 @@ func MapToPublic(options []Option) []PublicOption {
 	return out
 }
 
-func SelectOption(optionID string, userID string, roomID string, selectOptionRequest SelectOptionRequest, client *dynamodb.Client) (*Option, error) {
+func SelectOption(optionID string, userID string, roomID string, selectOptionRequest SelectOptionRequest, client *dynamodb.Client) (*PublicOption, error) {
 	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(os.Getenv("table")),
 		Key: map[string]types.AttributeValue{
@@ -86,12 +86,12 @@ func SelectOption(optionID string, userID string, roomID string, selectOptionReq
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID)
+	updatedOption := Unmarshal(res.Attributes, userID).getPublic()
 
 	return &updatedOption, nil
 }
 
-func UnselectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
+func UnselectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*PublicOption, error) {
 	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(os.Getenv("table")),
 		Key: map[string]types.AttributeValue{
@@ -111,7 +111,7 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID)
+	updatedOption := Unmarshal(res.Attributes, userID).getPublic()
 
 	return &updatedOption, nil
 }
