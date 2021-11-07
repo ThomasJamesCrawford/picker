@@ -41,7 +41,7 @@ type PublicOption struct {
 	RoomID         string  `json:"roomID"`
 	Value          string  `json:"value"`
 	Available      bool    `json:"available"`
-	SelectedByMeAs *string `json:"selectedByMeAs"`
+	SelectedByMeAs *string `json:"selectedByMeAs,omitempty"`
 }
 
 func (option Option) getPublic(userID string) PublicOption {
