@@ -30,9 +30,9 @@ type Room struct {
 	Type   string `dynamodbav:"type" json:"-"`
 
 	// Public
-	ID       string           `json:"id"`
-	Options  []*option.Option `json:"options"`
-	Question string           `json:"question"`
+	ID       string          `json:"id"`
+	Options  []option.Option `json:"options"`
+	Question string          `json:"question"`
 
 	// Private
 	OwnerID   string    `dynamodbav:"ownerID" json:"-"`
@@ -41,10 +41,10 @@ type Room struct {
 
 type PublicRoom struct {
 	// Public
-	ID        string           `json:"id"`
-	Options   []*option.Option `json:"options"`
-	Question  string           `json:"question"`
-	OwnedByMe bool             `json:"ownedByMe"`
+	ID        string                `json:"id"`
+	Options   []option.PublicOption `json:"options"`
+	Question  string                `json:"question"`
+	OwnedByMe bool                  `json:"ownedByMe"`
 }
 
 func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRoom, error) {
@@ -58,21 +58,23 @@ func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRo
 		return nil, nil
 	}
 
+	publicOptions := option.MapToPublic(room.Options)
+
 	return &PublicRoom{
 		ID:        room.ID,
-		Options:   room.Options,
+		Options:   publicOptions,
 		Question:  room.Question,
 		OwnedByMe: room.OwnerID == userID,
 	}, nil
 }
 
-func Unmarshal(item map[string]types.AttributeValue) *Room {
+func Unmarshal(item map[string]types.AttributeValue) Room {
 	room := &Room{}
 	if err := attributevalue.UnmarshalMap(item, room); err != nil {
 		panic(err)
 	}
 
-	return room
+	return *room
 }
 
 func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client) (*Room, error) {
@@ -131,7 +133,7 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 	})
 
 	var room *Room
-	var options []*option.Option = []*option.Option{}
+	var options []option.Option = []option.Option{}
 
 	for paginator.HasMorePages() {
 		out, err := paginator.NextPage(context.TODO())
@@ -145,7 +147,7 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 
 			switch itemType {
 			case dynamodbTypes.Room:
-				room = Unmarshal(item)
+				*room = Unmarshal(item)
 			case dynamodbTypes.Option:
 				options = append(options, option.Unmarshal(item, userID))
 			default:
@@ -163,7 +165,7 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 	return room, nil
 }
 
-func RoomsForUser(userID string, client *dynamodb.Client) ([]*Room, error) {
+func RoomsForUser(userID string, client *dynamodb.Client) (*[]Room, error) {
 	paginator := dynamodb.NewQueryPaginator(client, &dynamodb.QueryInput{
 		TableName: aws.String(os.Getenv("table")),
 		IndexName: aws.String("GSI1"),
@@ -176,7 +178,7 @@ func RoomsForUser(userID string, client *dynamodb.Client) ([]*Room, error) {
 		},
 	})
 
-	var rooms []*Room = []*Room{}
+	var rooms []Room = []Room{}
 
 	for paginator.HasMorePages() {
 		out, err := paginator.NextPage(context.TODO())
@@ -190,5 +192,5 @@ func RoomsForUser(userID string, client *dynamodb.Client) ([]*Room, error) {
 		}
 	}
 
-	return rooms, nil
+	return &rooms, nil
 }

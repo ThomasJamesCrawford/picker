@@ -156,7 +156,16 @@ func init() {
 		roomID := c.Param("roomID")
 		optionID := c.Param("optionID")
 
-		res, err := option.SelectOption(optionID, getUserID(c), roomID, client)
+		selectOptionRequest := option.SelectOptionRequest{}
+
+		err = c.ShouldBindJSON(&selectOptionRequest)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		res, err := option.SelectOption(optionID, getUserID(c), roomID, selectOptionRequest, client)
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)

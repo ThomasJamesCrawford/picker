@@ -14,6 +14,10 @@ import (
 	"github.com/twinj/uuid"
 )
 
+type SelectOptionRequest struct {
+	Name string `json:"name" binding:"required,min=1,max=1500"`
+}
+
 type Option struct {
 	// DynamoDB
 	PK   string `dynamodbav:"PK" json:"-"`
@@ -21,27 +25,57 @@ type Option struct {
 	Type string `dynamodbav:"type" json:"-"`
 
 	// Public
-	ID           string `json:"id"`
-	RoomID       string `json:"roomID"`
-	Value        string `json:"value"`
-	Available    bool   `dynamodbav:"-" json:"available"`
-	SelectedByMe bool   `dynamodbav:"-" json:"selectedByMe"`
+	ID             string  `json:"id"`
+	RoomID         string  `json:"roomID"`
+	Value          string  `json:"value"`
+	Available      bool    `dynamodbav:"-" json:"available"`
+	SelectedByMe   bool    `dynamodbav:"-" json:"selectedByMe"`
+	SelectedByName *string `dynamodbav:"selectedByName,omitEmpty" json:"selectedByName,omitempty"`
 
 	// Private
 	SelectedByID *string `dynamodbav:"selectedByID,omitEmpty" json:"-"`
 	OwnedByID    string  `dynamodbav:"ownedByID" json:"-"`
 }
 
-func SelectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
+type PublicOption struct {
+	ID           string `json:"id"`
+	RoomID       string `json:"roomID"`
+	Value        string `json:"value"`
+	Available    bool   `json:"available"`
+	SelectedByMe bool   `json:"selectedByMe"`
+}
+
+func (option Option) getPublic() PublicOption {
+	return PublicOption{
+		ID:           option.ID,
+		RoomID:       option.RoomID,
+		Value:        option.Value,
+		Available:    option.Available,
+		SelectedByMe: option.SelectedByMe,
+	}
+}
+
+func MapToPublic(options []Option) []PublicOption {
+	out := make([]PublicOption, len(options))
+
+	for _, opt := range options {
+		out = append(out, opt.getPublic())
+	}
+
+	return out
+}
+
+func SelectOption(optionID string, userID string, roomID string, selectOptionRequest SelectOptionRequest, client *dynamodb.Client) (*Option, error) {
 	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(os.Getenv("table")),
 		Key: map[string]types.AttributeValue{
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
 			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM_OPTION#%s", optionID)},
 		},
-		UpdateExpression: aws.String("set selectedByID = :userID"),
+		UpdateExpression: aws.String("set selectedByID = :userID, selectedByName = :name"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":userID": &types.AttributeValueMemberS{Value: userID},
+			":name":   &types.AttributeValueMemberS{Value: selectOptionRequest.Name},
 			":null":   &types.AttributeValueMemberNULL{Value: true},
 		},
 		ConditionExpression: aws.String("(attribute_not_exists(selectedByID) or selectedByID = :null) and attribute_exists(PK) and attribute_exists(SK)"),
@@ -54,7 +88,7 @@ func SelectOption(optionID string, userID string, roomID string, client *dynamod
 
 	updatedOption := Unmarshal(res.Attributes, userID)
 
-	return updatedOption, nil
+	return &updatedOption, nil
 }
 
 func UnselectOption(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
@@ -64,7 +98,7 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
 			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM_OPTION#%s", optionID)},
 		},
-		UpdateExpression: aws.String("set selectedByID = :null"),
+		UpdateExpression: aws.String("set selectedByID = :null, selectedByName = :null"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":userID": &types.AttributeValueMemberS{Value: userID},
 			":null":   &types.AttributeValueMemberNULL{Value: true},
@@ -79,7 +113,7 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 
 	updatedOption := Unmarshal(res.Attributes, userID)
 
-	return updatedOption, nil
+	return &updatedOption, nil
 }
 
 func Delete(optionID string, userID string, roomID string, client *dynamodb.Client) (*Option, error) {
@@ -102,7 +136,7 @@ func Delete(optionID string, userID string, roomID string, client *dynamodb.Clie
 
 	updatedOption := Unmarshal(res.Attributes, userID)
 
-	return updatedOption, nil
+	return &updatedOption, nil
 }
 
 func NewOption(option string, userID string, roomID string, client *dynamodb.Client) *Option {
@@ -118,8 +152,9 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 		RoomID: roomID,
 		Value:  option,
 
-		SelectedByID: nil,
-		OwnedByID:    userID,
+		SelectedByID:   nil,
+		SelectedByName: nil,
+		OwnedByID:      userID,
 	}
 }
 
@@ -190,8 +225,9 @@ func chunk(options []*Option, chunkSize int) [][]*Option {
 	return chunks
 }
 
-func Unmarshal(item map[string]types.AttributeValue, userID string) *Option {
+func Unmarshal(item map[string]types.AttributeValue, userID string) Option {
 	option := &Option{}
+
 	if err := attributevalue.UnmarshalMap(item, option); err != nil {
 		panic(err)
 	}
@@ -202,5 +238,5 @@ func Unmarshal(item map[string]types.AttributeValue, userID string) *Option {
 		option.SelectedByMe = *option.SelectedByID == userID
 	}
 
-	return option
+	return *option
 }

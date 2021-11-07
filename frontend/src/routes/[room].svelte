@@ -29,13 +29,15 @@
 
 	let selectedOption: string | undefined = undefined;
 
+	let name = '';
+
 	let error = '';
 	let loading = false;
 	let unselectLoading = false;
 
 	$: hasSelectedOptionAlready = room.options.find((opt) => opt.selectedByMe === true);
 
-	const submitOption = async (optionID: string | undefined, roomID: string) => {
+	const submitOption = async (optionID: string | undefined, roomID: string, name: string) => {
 		if (optionID === undefined) {
 			error = 'Please select an option';
 			return;
@@ -48,7 +50,8 @@
 			method: 'PATCH',
 			headers: {
 				accepts: 'application/json'
-			}
+			},
+			body: JSON.stringify({ name })
 		})
 			.then((res) => res.json())
 			.then((res: Option) => {
@@ -69,6 +72,7 @@
 				error = 'That option may have already been selected, try refreshing the page.';
 			})
 			.finally(() => {
+				selectedOption = undefined;
 				loading = false;
 			});
 	};
@@ -102,6 +106,7 @@
 				error = 'Something went wrong, try refreshing the page.';
 			})
 			.finally(() => {
+				selectedOption = undefined;
 				unselectLoading = false;
 			});
 	};
@@ -109,7 +114,7 @@
 
 <div class="container mx-auto max-w-lg py-4">
 	<form
-		on:submit|preventDefault={() => submitOption(selectedOption, room.id)}
+		on:submit|preventDefault={() => submitOption(selectedOption, room.id, name)}
 		class="card bg-white shadow-lg"
 	>
 		<div class="card-body">
@@ -153,13 +158,27 @@
 					{/if}
 				{/each}
 			</div>
+			<div class="form-control my-2">
+				<label for="name" class="label">
+					<span class="label-text">Name</span>
+				</label>
+				<input
+					type="text"
+					id="name"
+					bind:value={name}
+					required
+					aria-required
+					class="input input-bordered w-full"
+					placeholder="Something to identify you"
+				/>
+			</div>
 			<div class="flex justify-end mt-4">
 				<button
 					class="btn btn-primary"
 					class:loading
 					class:btn-disabled={hasSelectedOptionAlready}
 					disabled={!!hasSelectedOptionAlready}
-					aria-disabled={!!hasSelectedOptionAlready}>Save</button
+					aria-disabled={!!hasSelectedOptionAlready}>Submit</button
 				>
 			</div>
 			{#if error}
