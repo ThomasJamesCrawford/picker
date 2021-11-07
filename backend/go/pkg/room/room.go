@@ -35,8 +35,8 @@ type Room struct {
 
 	// Public
 	ID       string          `json:"id"`
-	Options  []option.Option `json:"options"`
-	Question string          `json:"question"`
+	Options  []option.Option `json:"options" dynamodbav:"options"`
+	Question string          `json:"question" dynamodbav:"question"`
 
 	// Private
 	OwnerID   string    `dynamodbav:"ownerID" json:"-"`

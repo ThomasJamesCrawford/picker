@@ -29,9 +29,9 @@ type Option struct {
 	Type string `dynamodbav:"type" json:"-"`
 
 	// Public
-	ID             string  `json:"id"`
-	RoomID         string  `json:"roomID"`
-	Value          string  `json:"value"`
+	ID             string  `json:"id" dynamodbav:"id"`
+	RoomID         string  `json:"roomID" dynamodbav:"roomID"`
+	Value          string  `json:"value" dynamodbav:"value"`
 	Available      bool    `dynamodbav:"-" json:"available"`
 	SelectedByName *string `dynamodbav:"selectedByName,omitEmpty" json:"selectedByName,omitempty"`
 
