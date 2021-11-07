@@ -37,6 +37,9 @@
 	let addLoading = false;
 	let optionInputValue = '';
 
+	let questionLoading = false;
+	let question = room.question;
+
 	const deleteOption = async (optionID: string, roomID: string) => {
 		deleteLoading = optionID;
 		error = '';
@@ -66,9 +69,10 @@
 
 	const addOption = async (option: string, roomID: string) => {
 		error = '';
-		addLoading = true;
 
 		if (!option) return;
+
+		addLoading = true;
 
 		return fetch(`${import.meta.env.VITE_API_URL}/room/${roomID}/option`, {
 			method: 'POST',
@@ -91,6 +95,39 @@
 			})
 			.finally(() => {
 				addLoading = false;
+			});
+	};
+
+	const updateRoom = async (roomID: string, updateRoom: { question: string }) => {
+		error = '';
+
+		if (!updateRoom.question) return;
+
+		questionLoading = true;
+
+		return fetch(`${import.meta.env.VITE_API_URL}/room/${roomID}`, {
+			method: 'PATCH',
+			headers: {
+				accepts: 'application/json'
+			},
+			body: JSON.stringify({
+				updateRoom
+			})
+		})
+			.then((res) => res.json())
+			.then((res: Room) => {
+				room = {
+					...res,
+					options: room.options
+				};
+
+				question = room.question;
+			})
+			.catch(() => {
+				error = 'Something went wrong, try refreshing the page.';
+			})
+			.finally(() => {
+				questionLoading = false;
 			});
 	};
 </script>
@@ -133,10 +170,18 @@
 				</label>
 				<textarea
 					id="question"
-					readonly={true}
-					value={room.question}
+					bind:value={question}
 					class="textarea h-24 textarea-bordered w-full"
 				/>
+				{#if question !== room.question}
+					<div class="flex justify-end mt-4">
+						<button
+							on:click={() => updateRoom(room.id, { question })}
+							type="button"
+							class="btn btn-secondary">SAVE</button
+						>
+					</div>
+				{/if}
 			</div>
 			<div class="flex flex-col space-y-2">
 				{#each sortOptions(room.options) as option}
