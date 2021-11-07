@@ -22,17 +22,13 @@
 
 <script lang="ts">
 	import { sortOptions } from '$lib/helpers/sortOptions';
-	import Duplicate from '$lib/icons/duplicate.svelte';
 	import Info from '$lib/icons/info.svelte';
 	import Trash from '$lib/icons/trash.svelte';
 	import type { Option, Room } from '$lib/types/Room';
-	import { onMount } from 'svelte';
 
 	export let room: Room;
 
-	let input: HTMLInputElement | undefined = undefined;
 	let copyAlertOpen = false;
-	let alertOpenTimer: NodeJS.Timeout | undefined = undefined;
 
 	let deleteLoading: string | null = null;
 	let error = '';
@@ -63,28 +59,6 @@
 				deleteLoading = null;
 			});
 	};
-
-	const copyPublicUrlToClipboard = () => {
-		if (input === undefined) {
-			return;
-		}
-
-		input.select();
-		document.execCommand('copy');
-
-		// trigger deselect
-		input.selectionEnd = input.selectionStart;
-
-		copyAlertOpen = true;
-
-		if (alertOpenTimer) {
-			clearTimeout(alertOpenTimer);
-		}
-
-		alertOpenTimer = setTimeout(() => (copyAlertOpen = false), 3000);
-	};
-
-	onMount(copyPublicUrlToClipboard);
 </script>
 
 <div class="container mx-auto max-w-lg py-4">
@@ -109,21 +83,13 @@
 					data-tip="Copied to clipboard"
 				>
 					<div class="relative">
-						<input
+						<a
 							id="public_url"
-							bind:this={input}
-							readonly={true}
-							type="text"
-							value={`${window.location.host}/${room.id}`}
-							class="w-full pr-16 input input-primary input-bordered focus:ring-0"
-						/>
-						<button
-							type="button"
-							on:click={() => copyPublicUrlToClipboard()}
-							class="absolute top-0 right-0 rounded-l-none btn btn-primary"
+							href={`${window.location.origin}/${room.id}`}
+							class="block w-full link link-primary"
 						>
-							<Duplicate />
-						</button>
+							{`${window.location.host}/${room.id}`}
+						</a>
 					</div>
 				</div>
 			</div>
