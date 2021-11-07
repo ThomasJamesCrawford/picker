@@ -24,7 +24,8 @@
 	import { sortOptions } from '$lib/helpers/sortOptions';
 	import Duplicate from '$lib/icons/duplicate.svelte';
 	import Info from '$lib/icons/info.svelte';
-	import type { Room } from '$lib/types/Room';
+	import Trash from '$lib/icons/trash.svelte';
+	import type { Option, Room } from '$lib/types/Room';
 	import { onMount } from 'svelte';
 
 	export let room: Room;
@@ -32,6 +33,36 @@
 	let input: HTMLInputElement | undefined = undefined;
 	let copyAlertOpen = false;
 	let alertOpenTimer: NodeJS.Timeout | undefined = undefined;
+
+	let deleteLoading: string | null = null;
+	let error = '';
+
+	const deleteOption = async (optionID: string, roomID: string) => {
+		deleteLoading = optionID;
+		error = '';
+
+		return fetch(`${import.meta.env.VITE_API_URL}/room/${roomID}/option/${optionID}`, {
+			method: 'DELETE',
+			headers: {
+				accepts: 'application/json'
+			}
+		})
+			.then((res) => res.json())
+			.then((res: Option) => {
+				const remainingOptions = room.options.filter(({ id }) => id !== res.id);
+
+				room = {
+					...room,
+					options: sortOptions(remainingOptions)
+				};
+			})
+			.catch(() => {
+				error = 'Something went wrong, try refreshing the page.';
+			})
+			.finally(() => {
+				deleteLoading = null;
+			});
+	};
 
 	const copyPublicUrlToClipboard = () => {
 		if (input === undefined) {
@@ -121,11 +152,26 @@
 							</div>
 						</div>
 					{:else}
-						<div class="bg-accent text-accent-content p-3 rounded-xl w-full">
-							{option.value}
+						<div class="flex space-x-2">
+							<div class="bg-accent text-accent-content p-3 rounded-xl w-full">
+								{option.value}
+							</div>
+							<button
+								class:loading={deleteLoading === option.id}
+								on:click={() => deleteOption(option.id, room.id)}
+								type="button"
+								class="btn btn-accent btn-circle"
+							>
+								{#if deleteLoading !== option.id}
+									<Trash />
+								{/if}
+							</button>
 						</div>
 					{/if}
 				{/each}
+				{#if error}
+					<div class="alert alert-warning mt-4">{error}</div>
+				{/if}
 			</div>
 		</div>
 	</div>
