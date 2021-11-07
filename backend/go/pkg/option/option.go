@@ -58,8 +58,8 @@ func (option Option) getPublic() PublicOption {
 func MapToPublic(options []Option) []PublicOption {
 	out := make([]PublicOption, len(options))
 
-	for _, opt := range options {
-		out = append(out, opt.getPublic())
+	for i, opt := range options {
+		out[i] = opt.getPublic()
 	}
 
 	return out
