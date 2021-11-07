@@ -21,6 +21,10 @@ type CreateRoomRequest struct {
 	Question string   `json:"question" binding:"required,min=1,max=1500"`
 }
 
+type UpdateRoomRequest struct {
+	Question string `json:"question" binding:"required,min=1,max=1500"`
+}
+
 type Room struct {
 	// DynamoDB
 	PK     string `dynamodbav:"PK" json:"-"`
@@ -201,4 +205,29 @@ func RoomsForUser(userID string, client *dynamodb.Client) (*[]Room, error) {
 	}
 
 	return &rooms, nil
+}
+
+func Update(userID string, roomID string, request UpdateRoomRequest, client *dynamodb.Client) (*Room, error) {
+	res, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("table")),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("ROOM#%s", roomID)},
+		},
+		UpdateExpression: aws.String("set question = :question"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userID":   &types.AttributeValueMemberS{Value: userID},
+			":question": &types.AttributeValueMemberS{Value: request.Question},
+		},
+		ConditionExpression: aws.String("ownedByID = :userID and attribute_exists(PK) and attribute_exists(SK)"),
+		ReturnValues:        types.ReturnValueAllNew,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRoom := Unmarshal(res.Attributes)
+
+	return &updatedRoom, nil
 }

@@ -190,12 +190,34 @@ func init() {
 		c.JSON(http.StatusOK, res)
 	})
 
+	api.PATCH("/room/:roomID", func(c *gin.Context) {
+		roomID := c.Param("roomID")
+
+		request := room.UpdateRoomRequest{}
+
+		err = c.ShouldBindJSON(&request)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		res, err := room.Update(getUserID(c), roomID, request, client)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+	})
+
 	api.POST("/room/:roomID/option", func(c *gin.Context) {
 		roomID := c.Param("roomID")
 
-		CreateOptionRequest := option.CreateOptionRequest{}
+		createOptionRequest := option.CreateOptionRequest{}
 
-		err = c.ShouldBindJSON(&CreateOptionRequest)
+		err = c.ShouldBindJSON(&createOptionRequest)
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
@@ -204,7 +226,7 @@ func init() {
 
 		userID := getUserID(c)
 
-		opt := option.NewOption(CreateOptionRequest.Option, userID, roomID)
+		opt := option.NewOption(createOptionRequest.Option, userID, roomID)
 
 		room, err := room.GetRoom(roomID, client, userID)
 
