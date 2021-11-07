@@ -29,7 +29,6 @@ type Option struct {
 	RoomID         string  `json:"roomID"`
 	Value          string  `json:"value"`
 	Available      bool    `dynamodbav:"-" json:"available"`
-	SelectedByMe   bool    `dynamodbav:"-" json:"selectedByMe"`
 	SelectedByName *string `dynamodbav:"selectedByName,omitEmpty" json:"selectedByName,omitempty"`
 
 	// Private
@@ -38,28 +37,33 @@ type Option struct {
 }
 
 type PublicOption struct {
-	ID           string `json:"id"`
-	RoomID       string `json:"roomID"`
-	Value        string `json:"value"`
-	Available    bool   `json:"available"`
-	SelectedByMe bool   `json:"selectedByMe"`
+	ID             string  `json:"id"`
+	RoomID         string  `json:"roomID"`
+	Value          string  `json:"value"`
+	Available      bool    `json:"available"`
+	SelectedByMeAs *string `json:"selectedByMeAs"`
 }
 
-func (option Option) getPublic() PublicOption {
+func (option Option) getPublic(userID string) PublicOption {
+	var selectedByMeAs *string
+	if userID == *option.SelectedByID {
+		selectedByMeAs = option.SelectedByName
+	}
+
 	return PublicOption{
-		ID:           option.ID,
-		RoomID:       option.RoomID,
-		Value:        option.Value,
-		Available:    option.Available,
-		SelectedByMe: option.SelectedByMe,
+		ID:             option.ID,
+		RoomID:         option.RoomID,
+		Value:          option.Value,
+		Available:      option.Available,
+		SelectedByMeAs: selectedByMeAs,
 	}
 }
 
-func MapToPublic(options []Option) []PublicOption {
+func MapToPublic(options []Option, userID string) []PublicOption {
 	out := make([]PublicOption, len(options))
 
 	for i, opt := range options {
-		out[i] = opt.getPublic()
+		out[i] = opt.getPublic(userID)
 	}
 
 	return out
@@ -86,7 +90,7 @@ func SelectOption(optionID string, userID string, roomID string, selectOptionReq
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID).getPublic()
+	updatedOption := Unmarshal(res.Attributes, userID).getPublic(userID)
 
 	return &updatedOption, nil
 }
@@ -111,7 +115,7 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID).getPublic()
+	updatedOption := Unmarshal(res.Attributes, userID).getPublic(userID)
 
 	return &updatedOption, nil
 }
@@ -233,10 +237,6 @@ func Unmarshal(item map[string]types.AttributeValue, userID string) Option {
 	}
 
 	option.Available = option.SelectedByID == nil
-
-	if option.SelectedByID != nil {
-		option.SelectedByMe = *option.SelectedByID == userID
-	}
 
 	return *option
 }

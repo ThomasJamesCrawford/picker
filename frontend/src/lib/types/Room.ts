@@ -20,13 +20,12 @@ export interface PublicOption {
 	id: string;
 	value: string;
 	available: boolean;
-	selectedByMe: boolean;
+	selectedByMeAs?: string;
 }
 
 export interface Option extends PublicOption {
 	id: string;
 	value: string;
 	available: boolean;
-	selectedByMe: boolean;
 	selectedByName?: string;
 }

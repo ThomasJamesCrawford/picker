@@ -48,7 +48,7 @@ type PublicRoom struct {
 }
 
 func (room Room) getPublic(userID string) PublicRoom {
-	publicOptions := option.MapToPublic(room.Options)
+	publicOptions := option.MapToPublic(room.Options, userID)
 
 	return PublicRoom{
 		ID:        room.ID,
