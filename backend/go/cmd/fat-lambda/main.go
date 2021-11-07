@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
@@ -187,6 +188,58 @@ func init() {
 		}
 
 		c.JSON(http.StatusOK, res)
+	})
+
+	api.POST("/room/:roomID/option", func(c *gin.Context) {
+		roomID := c.Param("roomID")
+
+		CreateOptionRequest := option.CreateOptionRequest{}
+
+		err = c.ShouldBindJSON(&CreateOptionRequest)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		userID := getUserID(c)
+
+		opt := option.NewOption(CreateOptionRequest.Option, userID, roomID)
+
+		room, err := room.GetRoom(roomID, client, userID)
+
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		if room == nil {
+			c.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+
+		if room.OwnerID != userID {
+			c.AbortWithError(http.StatusForbidden, err)
+			return
+		}
+
+		opts := []*option.Option{&opt}
+
+		writeErr := option.BatchWriteOptions(opts, client)
+
+		if writeErr != nil {
+			c.AbortWithError(http.StatusBadRequest, writeErr)
+			return
+		}
+
+		// marshal then unmarshal the option so it is initialised with non saved values (Available)
+		optMarshalled, err := attributevalue.MarshalMap(opt)
+
+		if err != nil {
+			panic(err)
+		}
+
+		c.JSON(http.StatusOK, option.Unmarshal(optMarshalled))
 	})
 
 	api.DELETE("/room/:roomID/option/:optionID", func(c *gin.Context) {

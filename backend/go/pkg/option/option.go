@@ -18,6 +18,10 @@ type SelectOptionRequest struct {
 	Name string `json:"name" binding:"required,min=1,max=1500"`
 }
 
+type CreateOptionRequest struct {
+	Option string `json:"option" binding:"required,min=1,max=1500"`
+}
+
 type Option struct {
 	// DynamoDB
 	PK   string `dynamodbav:"PK" json:"-"`
@@ -90,7 +94,7 @@ func SelectOption(optionID string, userID string, roomID string, selectOptionReq
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID).getPublic(userID)
+	updatedOption := Unmarshal(res.Attributes).getPublic(userID)
 
 	return &updatedOption, nil
 }
@@ -115,7 +119,7 @@ func UnselectOption(optionID string, userID string, roomID string, client *dynam
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID).getPublic(userID)
+	updatedOption := Unmarshal(res.Attributes).getPublic(userID)
 
 	return &updatedOption, nil
 }
@@ -138,15 +142,15 @@ func Delete(optionID string, userID string, roomID string, client *dynamodb.Clie
 		return nil, err
 	}
 
-	updatedOption := Unmarshal(res.Attributes, userID)
+	updatedOption := Unmarshal(res.Attributes)
 
 	return &updatedOption, nil
 }
 
-func NewOption(option string, userID string, roomID string, client *dynamodb.Client) *Option {
+func NewOption(option string, userID string, roomID string) Option {
 	optionID := uuid.NewV4().String()
 
-	return &Option{
+	return Option{
 		PK: fmt.Sprintf("ROOM#%s", roomID),
 		// This lets us use a BEGINS_WITH in our single table to pull in a room and all the options with one query
 		SK:   fmt.Sprintf("ROOM_OPTION#%s", optionID),
@@ -162,7 +166,7 @@ func NewOption(option string, userID string, roomID string, client *dynamodb.Cli
 	}
 }
 
-func BatchWriteOptionChunk(chunk []*Option, client *dynamodb.Client, wg *sync.WaitGroup) {
+func batchWriteOptionChunk(chunk []*Option, client *dynamodb.Client, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var items []types.WriteRequest
@@ -204,7 +208,7 @@ func BatchWriteOptions(options []*Option, client *dynamodb.Client) error {
 		wg.Add(1)
 
 		// Process each chunk async
-		go BatchWriteOptionChunk(chunk, client, &wg)
+		go batchWriteOptionChunk(chunk, client, &wg)
 	}
 
 	wg.Wait()
@@ -229,7 +233,7 @@ func chunk(options []*Option, chunkSize int) [][]*Option {
 	return chunks
 }
 
-func Unmarshal(item map[string]types.AttributeValue, userID string) Option {
+func Unmarshal(item map[string]types.AttributeValue) Option {
 	option := &Option{}
 
 	if err := attributevalue.UnmarshalMap(item, option); err != nil {

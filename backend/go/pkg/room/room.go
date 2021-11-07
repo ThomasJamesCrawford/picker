@@ -116,7 +116,8 @@ func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client)
 
 	var options []*option.Option
 	for _, opt := range request.Options {
-		options = append(options, option.NewOption(opt, userID, request.ID, client))
+		newOpt := option.NewOption(opt, userID, request.ID)
+		options = append(options, &newOpt)
 	}
 
 	err = option.BatchWriteOptions(options, client)
@@ -156,7 +157,7 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 				res := Unmarshal(item)
 				room = &res
 			case dynamodbTypes.Option:
-				options = append(options, option.Unmarshal(item, userID))
+				options = append(options, option.Unmarshal(item))
 			default:
 				log.Default().Printf("%s missing", itemType)
 			}
