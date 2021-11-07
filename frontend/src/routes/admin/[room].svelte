@@ -3,20 +3,22 @@
 	 * @type {import('@sveltejs/kit').Load}
 	 */
 	export async function load({ page, fetch }) {
-		const res = await fetch(`${import.meta.env.VITE_API_URL}/room/${page.params['room']}`);
+		try {
+			const res = await fetch(`${import.meta.env.VITE_API_URL}/room/${page.params['room']}`).then(
+				(res) => res.json()
+			);
 
-		if (res.ok) {
 			return {
 				props: {
-					room: await res.json()
+					room: res
 				}
 			};
+		} catch (e) {
+			return {
+				status: 404,
+				error: new Error(`That room could not be found.`)
+			};
 		}
-
-		return {
-			status: res.status,
-			error: new Error(`Could not load that room`)
-		};
 	}
 </script>
 
@@ -230,11 +232,12 @@
 				<div class="flex space-x-2">
 					<input
 						id="option"
-						on:keydown={(e) => {
+						on:keydown={async (e) => {
 							if (e.key === 'Enter') {
-								addOption(optionInputValue, room.id);
 								e.preventDefault();
 								e.stopPropagation();
+
+								await addOption(optionInputValue, room.id);
 							}
 						}}
 						bind:value={optionInputValue}
@@ -243,7 +246,7 @@
 						class="w-full input input-bordered"
 					/>
 					<button
-						on:click={() => addOption(optionInputValue, room.id)}
+						on:click|preventDefault={() => addOption(optionInputValue, room.id)}
 						type="button"
 						class:loading={addLoading}
 						class="btn btn-secondary btn-circle"

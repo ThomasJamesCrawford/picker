@@ -3,20 +3,22 @@
 	 * @type {import('@sveltejs/kit').Load}
 	 */
 	export async function load({ page, fetch }) {
-		const res = await fetch(`${import.meta.env.VITE_API_URL}/publicRoom/${page.params['room']}`);
+		try {
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/publicRoom/${page.params['room']}`
+			).then((res) => res.json());
 
-		if (res.ok) {
 			return {
 				props: {
-					room: await res.json()
+					room: res
 				}
 			};
+		} catch (e) {
+			return {
+				status: 404,
+				error: new Error(`That room could not be found.`)
+			};
 		}
-
-		return {
-			status: res.status,
-			error: new Error(`Could not load that room`)
-		};
 	}
 </script>
 
