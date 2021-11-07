@@ -21,6 +21,8 @@
 </script>
 
 <script lang="ts">
+	import { sortOptions } from '$lib/helpers/sortOptions';
+
 	import Cross from '$lib/icons/cross.svelte';
 
 	import type { PublicRoom, PublicOption } from '$lib/types/Room';
@@ -40,15 +42,6 @@
 	$: if (hasSelectedOptionAlready) {
 		name = hasSelectedOptionAlready.selectedByMeAs || name;
 	}
-
-	const sortOptions = (options: PublicOption[]) =>
-		options.sort((a, b) => {
-			if (a.value === b.value) {
-				return a.id.localeCompare(b.id);
-			}
-
-			return a.value.localeCompare(b.value);
-		});
 
 	const submitOption = async (optionID: string | undefined, roomID: string, name: string) => {
 		if (optionID === undefined) {

@@ -21,6 +21,7 @@
 </script>
 
 <script lang="ts">
+	import { sortOptions } from '$lib/helpers/sortOptions';
 	import Duplicate from '$lib/icons/duplicate.svelte';
 	import Info from '$lib/icons/info.svelte';
 	import type { Room } from '$lib/types/Room';
@@ -107,7 +108,7 @@
 				/>
 			</div>
 			<div class="flex flex-col space-y-2">
-				{#each room.options.sort((a, b) => a.value.localeCompare(b.value)) as option}
+				{#each sortOptions(room.options) as option}
 					{#if !option.available}
 						<div class="bg-secondary text-secondary-content p-3 rounded-xl w-full">
 							{option.value}
