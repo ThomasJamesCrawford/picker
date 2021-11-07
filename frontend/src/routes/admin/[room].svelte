@@ -24,12 +24,35 @@
 	import Duplicate from '$lib/icons/duplicate.svelte';
 	import Info from '$lib/icons/info.svelte';
 	import type { Room } from '$lib/types/Room';
+	import { onMount } from 'svelte';
 
 	export let room: Room;
 
 	let input: HTMLInputElement | undefined = undefined;
 	let copyAlertOpen = false;
 	let alertOpenTimer: NodeJS.Timeout | undefined = undefined;
+
+	const copyPublicUrlToClipboard = () => {
+		if (input === undefined) {
+			return;
+		}
+
+		input.select();
+		document.execCommand('copy');
+
+		// trigger deselect
+		input.selectionEnd = input.selectionStart;
+
+		copyAlertOpen = true;
+
+		if (alertOpenTimer) {
+			clearTimeout(alertOpenTimer);
+		}
+
+		alertOpenTimer = setTimeout(() => (copyAlertOpen = false), 3000);
+	};
+
+	onMount(copyPublicUrlToClipboard);
 </script>
 
 <div class="container mx-auto max-w-lg py-4">
@@ -64,25 +87,7 @@
 						/>
 						<button
 							type="button"
-							on:click={() => {
-								if (input === undefined) {
-									return;
-								}
-
-								input.select();
-								document.execCommand('copy');
-
-								// trigger deselect
-								input.selectionEnd = input.selectionStart;
-
-								copyAlertOpen = true;
-
-								if (alertOpenTimer) {
-									clearTimeout(alertOpenTimer);
-								}
-
-								alertOpenTimer = setTimeout(() => (copyAlertOpen = false), 3000);
-							}}
+							on:click={() => copyPublicUrlToClipboard()}
 							class="absolute top-0 right-0 rounded-l-none btn btn-primary"
 						>
 							<Duplicate />
