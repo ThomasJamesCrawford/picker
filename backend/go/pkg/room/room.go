@@ -47,6 +47,17 @@ type PublicRoom struct {
 	OwnedByMe bool                  `json:"ownedByMe"`
 }
 
+func (room Room) getPublic(userID string) PublicRoom {
+	publicOptions := option.MapToPublic(room.Options)
+
+	return PublicRoom{
+		ID:        room.ID,
+		Options:   publicOptions,
+		Question:  room.Question,
+		OwnedByMe: room.OwnerID == userID,
+	}
+}
+
 func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRoom, error) {
 	room, err := GetRoom(id, client, userID)
 
@@ -57,15 +68,10 @@ func GetPublicRoom(id string, client *dynamodb.Client, userID string) (*PublicRo
 	if room == nil {
 		return nil, nil
 	}
+	publicRoom := room.getPublic(userID)
 
-	publicOptions := option.MapToPublic(room.Options)
+	return &publicRoom, nil
 
-	return &PublicRoom{
-		ID:        room.ID,
-		Options:   publicOptions,
-		Question:  room.Question,
-		OwnedByMe: room.OwnerID == userID,
-	}, nil
 }
 
 func Unmarshal(item map[string]types.AttributeValue) Room {
