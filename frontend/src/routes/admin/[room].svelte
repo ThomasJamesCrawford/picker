@@ -111,7 +111,14 @@
 				{#each sortOptions(room.options) as option}
 					{#if !option.available}
 						<div class="bg-secondary text-secondary-content p-3 rounded-xl w-full">
-							{option.value}
+							<div class="flex justify-between">
+								<div>
+									{option.value}
+								</div>
+								<div>
+									{option.selectedByName}
+								</div>
+							</div>
 						</div>
 					{:else}
 						<div class="bg-accent text-accent-content p-3 rounded-xl w-full">
