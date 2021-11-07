@@ -10,15 +10,9 @@
 </script>
 
 <script lang="ts">
-	import { APP_NAME } from '$lib/constants';
-
 	export let error: string;
 	export let status: string;
 </script>
-
-<svelte:head>
-	<title>{APP_NAME}</title>
-</svelte:head>
 
 <div class="contaier mx-auto max-w-lg p-16">
 	<div class="mb-8 text-center">{status}</div>

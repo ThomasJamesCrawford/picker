@@ -7,7 +7,6 @@
 	import Loading from '$lib/icons/loading.svelte';
 	import { debounce } from '$lib/helpers/debounce';
 	import { customAlphabet } from 'nanoid';
-	import { APP_NAME } from '$lib/constants';
 	import { goto } from '$app/navigation';
 
 	const nanoid = customAlphabet(
@@ -88,12 +87,12 @@
 <div class="container mx-auto max-w-xl py-4">
 	<form class="card bg-white shadow-lg" on:submit|preventDefault={submit}>
 		<div class="card-body">
-			<div class="card-title">Create a new room</div>
+			<div class="card-title">Create a new picknow room</div>
 			<div class="form-control">
 				<label for="short_link" class="label justify-start space-x-2">
 					<span class="label-text">Short link</span>
 					<span
-						data-tip="This is the url where your {APP_NAME} will live"
+						data-tip="This is the url where your picknow room will live"
 						class="text-gray-500 tooltip-right tooltip tooltip-accent"
 					>
 						<Info />
@@ -106,7 +105,7 @@
 					class:tooltip-open={errorTooltipOpen}
 				>
 					<label class="input-group">
-						<span>{APP_NAME}.com/</span>
+						<span>picknow.io/</span>
 						<input
 							title="Only letters and numbers allowed"
 							pattern="^[a-zA-Z0-9]*$"

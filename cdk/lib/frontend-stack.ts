@@ -2,10 +2,13 @@ import * as cdk from "@aws-cdk/core";
 import * as s3 from "@aws-cdk/aws-s3";
 import * as s3deploy from "@aws-cdk/aws-s3-deployment";
 import * as cloudfront from "@aws-cdk/aws-cloudfront";
+import * as route53 from "@aws-cdk/aws-route53";
+import * as targets from "@aws-cdk/aws-route53-targets";
+import * as acm from "@aws-cdk/aws-certificatemanager";
 import { HttpApi } from "@aws-cdk/aws-apigatewayv2";
 import { StringParameter } from "@aws-cdk/aws-ssm";
-import { PriceClass } from "@aws-cdk/aws-cloudfront";
-import { APP_NAME } from "./shared-parameters";
+import { PriceClass, ViewerCertificate } from "@aws-cdk/aws-cloudfront";
+import { APP_NAME, DOMAIN_NAME } from "./shared-parameters";
 import { BlockPublicAccess } from "@aws-cdk/aws-s3";
 
 interface FrontendStackProps extends cdk.StackProps {
@@ -30,10 +33,25 @@ export class FrontendStack extends cdk.Stack {
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, "oai");
     svelteBucket.grantRead(cloudfrontOAI.grantPrincipal);
 
+    const hostedZone = route53.PublicHostedZone.fromLookup(this, "hostedZone", {
+      domainName: DOMAIN_NAME,
+    });
+
+    const certificate = new acm.DnsValidatedCertificate(
+      this,
+      "acmCertificate",
+      {
+        domainName: DOMAIN_NAME,
+        hostedZone,
+        region: "us-east-1",
+      }
+    );
+
     const distribution = new cloudfront.CloudFrontWebDistribution(
       this,
       "distribution",
       {
+        viewerCertificate: ViewerCertificate.fromAcmCertificate(certificate),
         /**
          * SPA routing will 404, needs to be handled client side
          *
@@ -86,6 +104,20 @@ export class FrontendStack extends cdk.Stack {
         ],
       }
     );
+
+    new route53.AaaaRecord(this, "cloudfrontDistributionAlias", {
+      zone: hostedZone,
+      target: route53.RecordTarget.fromAlias(
+        new targets.CloudFrontTarget(distribution)
+      ),
+    });
+
+    new route53.ARecord(this, "cloudfrontDistributionAliasIPv4", {
+      zone: hostedZone,
+      target: route53.RecordTarget.fromAlias(
+        new targets.CloudFrontTarget(distribution)
+      ),
+    });
 
     new s3deploy.BucketDeployment(this, "static-svelte-website-deployment", {
       /**

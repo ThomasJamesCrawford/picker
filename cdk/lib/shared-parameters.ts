@@ -6,6 +6,8 @@ export const APP_NAME = "picker";
 
 export const SSM_BASE_PATH = `/${APP_NAME}/`;
 
+export const DOMAIN_NAME = "picknow.io";
+
 export class SharedParametersStack extends cdk.Stack {
   public sessionCookie: StringParameter;
 
