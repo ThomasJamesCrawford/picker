@@ -37,7 +37,7 @@
 	let loading = false;
 	let unselectLoading = false;
 
-	$: hasSelectedOptionAlready = room.options.find((opt) => opt.selectedByMeAs !== undefined);
+	$: hasSelectedOptionAlready = room.options.find((opt) => !!opt.selectedByMeAs);
 
 	$: if (hasSelectedOptionAlready) {
 		name = hasSelectedOptionAlready.selectedByMeAs || name;
