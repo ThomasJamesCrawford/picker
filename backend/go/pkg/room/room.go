@@ -87,7 +87,7 @@ func NewRoom(request *CreateRoomRequest, userID string, client *dynamodb.Client)
 		OwnerID:   userID,
 		CreatedAt: createdAt,
 		GSI1PK:    fmt.Sprintf("USER#%s", userID),
-		GSI1SK:    fmt.Sprintf("ROOM#%s", createdAt.Format(time.RFC3339)),
+		GSI1SK:    fmt.Sprintf("ROOM#%s#%s", createdAt.Format(time.RFC3339), request.ID),
 	}
 
 	marshalledRoom, marshallErr := attributevalue.MarshalMap(room)

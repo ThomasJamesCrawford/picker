@@ -13,10 +13,10 @@
 ## Single Table Schema
 
 ### Entities
-| Entity | PK        | SK               | GSI1PK    | GSI1SK       | type   |
-| ------ | --------- | ---------------- | --------- | ------------ | ------ |
-| Room   | ROOM#NAME | ROOM#NAME        | USER#UUID | ROOM#RFC3339 | room   |
-| Option | ROOM#NAME | ROOM_OPTION#UUID |           |              | option |
+| Entity | PK        | SK               | GSI1PK    | GSI1SK            | type   |
+| ------ | --------- | ---------------- | --------- | ----------------- | ------ |
+| Room   | ROOM#NAME | ROOM#NAME        | USER#UUID | ROOM#RFC3339#NAME | room   |
+| Option | ROOM#NAME | ROOM_OPTION#UUID |           |                   | option |
 
 ### Access Patterns
 | Access Pattern                                                     | Query                                            |
