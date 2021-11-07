@@ -46,7 +46,7 @@ type PublicOption struct {
 
 func (option Option) getPublic(userID string) PublicOption {
 	var selectedByMeAs *string
-	if userID == *option.SelectedByID {
+	if option.SelectedByID != nil && userID == *option.SelectedByID {
 		selectedByMeAs = option.SelectedByName
 	}
 
