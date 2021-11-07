@@ -147,7 +147,8 @@ func GetRoom(id string, client *dynamodb.Client, userID string) (*Room, error) {
 
 			switch itemType {
 			case dynamodbTypes.Room:
-				*room = Unmarshal(item)
+				res := Unmarshal(item)
+				room = &res
 			case dynamodbTypes.Option:
 				options = append(options, option.Unmarshal(item, userID))
 			default:
