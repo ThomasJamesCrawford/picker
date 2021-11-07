@@ -110,9 +110,7 @@
 			headers: {
 				accepts: 'application/json'
 			},
-			body: JSON.stringify({
-				updateRoom
-			})
+			body: JSON.stringify(updateRoom)
 		})
 			.then((res) => res.json())
 			.then((res: Room) => {
@@ -178,9 +176,13 @@
 						<button
 							on:click={() => updateRoom(room.id, { question })}
 							type="button"
+							class:loading={questionLoading}
 							class="btn btn-secondary">SAVE</button
 						>
 					</div>
+					{#if error}
+						<div class="alert alert-warning mt-4">{error}</div>
+					{/if}
 				{/if}
 			</div>
 			<div class="flex flex-col space-y-2">
