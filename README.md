@@ -1,4 +1,6 @@
-# Picker
+# picknow.io
+A micro booking system
+
 https://picknow.io
 
 ## Table of contents
